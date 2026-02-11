@@ -71,10 +71,10 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto no-scrollbar bg-black/70 backdrop-blur-md animate-fade-in">
-      <div className="fixed inset-0 cursor-pointer -z-10" onClick={onClose} />
+    <div className="fixed inset-0 z-[150] flex items-start justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto bg-black/70 backdrop-blur-md animate-fade-in">
+      <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
       
-      <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-[2.5rem] overflow-hidden shadow-[0_48px_100px_-12px_rgba(0,0,0,1)] animate-scale-in border border-white/10 bg-[#020617] relative z-10 min-h-[600px]">
+      <div className="w-full max-w-5xl flex flex-col lg:flex-row rounded-[2.5rem] overflow-hidden shadow-[0_48px_100px_-12px_rgba(0,0,0,1)] animate-scale-in border border-white/10 bg-[#020617] relative my-auto">
         
         {/* Premium Success Overlay */}
         {success && (
