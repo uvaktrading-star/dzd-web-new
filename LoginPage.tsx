@@ -179,55 +179,57 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5 lg:space-y-6">
-                <div>
-                  <label className="block text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1.5 lg:mb-2 ml-1">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 lg:left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} className="lg:w-5 lg:h-5" />
-                    <input
-                      required
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-10 lg:pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
-                      placeholder="mail@example.com"
-                    />
-                  </div>
-                </div>
+{/* Email Field */}
+<div>
+  <label className="block text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1.5 lg:mb-2 ml-1">
+    Email
+  </label>
+  <div className="relative">
+    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
+    <input
+      required
+      type="email"
+      value={email}
+      onChange={e => setEmail(e.target.value)}
+      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
+      placeholder="mail@example.com"
+    />
+  </div>
+</div>
 
-                <div>
-                  <div className="flex justify-between items-center px-1 mb-1.5 lg:mb-2">
-                    <label className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleRestoreClick}
-                      className="text-[9px] lg:text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 lg:left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} className="lg:w-5 lg:h-5" />
-                    <input
-                      required
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-10 lg:pl-12 pr-12 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 lg:right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} className="lg:w-5 lg:h-5" /> : <Eye size={18} className="lg:w-5 lg:h-5" />}
-                    </button>
-                  </div>
-                </div>
+{/* Password Field */}
+<div>
+  <div className="flex justify-between items-center px-1 mb-1.5 lg:mb-2">
+    <label className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-slate-600">
+      Password
+    </label>
+    <button
+      type="button"
+      onClick={handleRestoreClick}
+      className="text-[9px] lg:text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
+    >
+      Forgot Password?
+    </button>
+  </div>
+  <div className="relative">
+    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-[18px] h-[18px] lg:w-5 lg:h-5" />
+    <input
+      required
+      type={showPassword ? "text" : "password"}
+      value={password}
+      onChange={e => setPassword(e.target.value)}
+      className="w-full h-12 lg:h-14 bg-[#0a1121] border border-white/5 rounded-xl pl-12 pr-12 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm placeholder:text-slate-700"
+      placeholder="••••••••"
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+    >
+      {showPassword ? <EyeOff size={18} className="lg:w-5 lg:h-5" /> : <Eye size={18} className="lg:w-5 lg:h-5" />}
+    </button>
+  </div>
+</div>
 
                 <button
                   type="submit"
