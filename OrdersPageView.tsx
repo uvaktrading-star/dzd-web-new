@@ -661,8 +661,8 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 
       {/* Main Content Area */}
       <div className="mt-1.5 pt-1.5">
-        {!currentUser ? (
-          {/* Not logged in state */}
+         {/* Not logged in state */}
+        {!currentUser ? (         
           <div className="max-w-3xl mx-auto py-20 text-center">
             <div className="bg-white dark:bg-white/5 rounded-[2.5rem] border border-slate-200 dark:border-white/10 p-12">
               <Activity size={48} className="mx-auto text-slate-400 mb-4" />
