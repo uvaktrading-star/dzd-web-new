@@ -32,7 +32,6 @@ export default function ServicesPageView() {
   const [visibleCount, setVisibleCount] = useState(25);
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 40;
 
@@ -62,8 +61,7 @@ export default function ServicesPageView() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Hide header when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
         setShowHeader(false);
       } else {
         setShowHeader(true);
@@ -102,10 +100,10 @@ export default function ServicesPageView() {
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* Sticky Command Bridge - Frosted UI - Hides on scroll down */}
+      {/* Main Header - No sticky, just normal flow with transform hide/show */}
       <div 
-        className={`sticky top-[-2rem] md:top-[-3rem] z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-4 bg-[#fcfdfe]/80 dark:bg-[#020617]/80 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 ${
-          showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        className={`-mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-6 bg-[#fcfdfe] dark:bg-[#020617] border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 ${
+          showHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none absolute'
         }`}
       >
         <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
@@ -155,15 +153,15 @@ export default function ServicesPageView() {
         </div>
       </div>
 
-      {/* Mini header appears when main header is hidden - only shows search and categories */}
+      {/* Sticky Mini Header - Only appears when main header is hidden */}
       <div 
-        className={`sticky top-0 z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-3 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 md:hidden ${
-          showHeader ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+        className={`sticky top-0 z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-3 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 ${
+          showHeader ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'
         }`}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col gap-2">
-            <div className="relative group">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+            <div className="flex-1 relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
               <input 
                 type="text" 
@@ -174,12 +172,12 @@ export default function ServicesPageView() {
               />
             </div>
             
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 md:max-w-md">
               {categories.slice(0, 8).map(cat => (
                 <button 
                   key={cat} 
                   onClick={() => { setActiveCategory(cat); setVisibleCount(25); }}
-                  className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${activeCategory === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex-shrink-0 ${activeCategory === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5'}`}
                 >
                   {cat}
                 </button>
