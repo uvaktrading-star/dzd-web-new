@@ -23,7 +23,7 @@ const getStatusBadges = (name: string) => {
   return badges.slice(0, 2);
 };
 
-export default function ServicesPageView() {
+export default function ServicesPageView({ scrollContainerRef }: any) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [services, setServices] = useState<any[]>([]);
@@ -99,14 +99,16 @@ export default function ServicesPageView() {
     setVisibleCount(prev => prev + PAGE_SIZE);
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({
+const scrollToTop = () => {
+  if (scrollContainerRef?.current) {
+    scrollContainerRef.current.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-    setShowHeader(true);
-    setLastScrollY(0);
-  };
+  }
+  setShowHeader(true);
+  setLastScrollY(0);
+};
 
   return (
     <div className="relative animate-fade-in pb-32">
@@ -199,7 +201,7 @@ export default function ServicesPageView() {
       )}
 
       {/* Services Grid - NO MARGIN/PADDING AT ALL */}
-      <div className="mt-0 pt-0">
+      <div className="mt-0.5 pt-0.5">
         {/* Desktop Data Grid */}
         <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
           <table className="w-full text-left">
