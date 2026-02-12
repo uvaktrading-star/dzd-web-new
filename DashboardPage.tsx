@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
+import OrdersPageView from './OrdersPageView';
 
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
@@ -159,34 +160,37 @@ export default function DashboardPage({ user }: any) {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main
+{/* MAIN CONTENT AREA */}
+<main
   ref={mainRef}
   className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-8 lg:p-12 relative pb-32 md:pb-12 bg-[#fcfdfe] dark:bg-[#020617]"
 >
+  <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
 
-        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          {activeTab === 'home' && <DashboardHomeView user={user} balance={balance} />}
-          {activeTab === 'services' && (
-  <ServicesPageView scrollContainerRef={mainRef} />
-)}
-
-          
-          {(!['home', 'services'].includes(activeTab)) && (
-            <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
-              <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
-                <Activity size={40} className="animate-pulse" />
-              </div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Node: {activeTab}</h2>
-              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-sm leading-relaxed">
-                Establishing encrypted link to the {activeTab} protocol hub.
-              </p>
-            </div>
-          )}
+  <div className="max-w-6xl mx-auto relative z-10">
+    {activeTab === 'home' && <DashboardHomeView user={user} balance={balance} />}
+    
+    {activeTab === 'services' && (
+      <ServicesPageView scrollContainerRef={mainRef} />
+    )}
+    
+    {activeTab === 'orders' && (
+      <OrdersPageView scrollContainerRef={mainRef} />
+    )}
+    
+    {!['home', 'services', 'orders'].includes(activeTab) && (
+      <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
+        <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
+          <Activity size={40} className="animate-pulse" />
         </div>
-      </main>
+        <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Node: {activeTab}</h2>
+        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-sm leading-relaxed">
+          Establishing encrypted link to the {activeTab} protocol hub.
+        </p>
+      </div>
+    )}
+  </div>
+</main>
 
 {/* MOBILE BOTTOM NAV - Icon + Label */}
 <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-2 z-50">
