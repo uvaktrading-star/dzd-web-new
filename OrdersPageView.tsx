@@ -4,7 +4,6 @@ import {
   Loader2, 
   RefreshCw, 
   PlusCircle, 
-  Globe, 
   Activity, 
   Zap, 
   ArrowRight,
@@ -21,10 +20,16 @@ import {
   DollarSign,
   Hash,
   Send,
-  Copy,
-  ExternalLink
+  Copy
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
+import { auth, db } from './firebase';
+import { 
+  saveOrderToFirestore, 
+  getUserOrders, 
+  updateOrderStatus 
+} from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // Order status badge component
 const getOrderStatusBadge = (status: string) => {
@@ -67,8 +72,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   // Refs
   const dropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
-  const orderFormRef = useRef(null);
   const topRef = useRef<HTMLDivElement>(null);
+  
+  // Auth State
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   // UI State
   const [filterOpen, setFilterOpen] = useState(false);
@@ -78,7 +85,6 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [dateRange, setDateRange] = useState('Last 30 days');
-  const [showOrderForm, setShowOrderForm] = useState(false);
   const [activeView, setActiveView] = useState<'orders' | 'new'>('orders');
   
   // Data State
@@ -88,6 +94,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   const [loadingServices, setLoadingServices] = useState(false);
   const [error, setError] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Order Form State
   const [selectedService, setSelectedService] = useState('');
@@ -105,25 +112,22 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 
   const PAGE_SIZE = 30;
 
-  // Load orders from API
-  const loadOrders = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await fetchSmmApi({ action: 'orders' });
-      if (Array.isArray(data)) {
-        setOrders(data);
-      } else {
-        setError('Communication error: Orders node structure mismatch.');
+  // ============================================
+  // AUTH STATE LISTENER
+  // ============================================
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (!user) {
+        setOrders([]);
       }
-    } catch (err) {
-      setError('Protocol timeout: Orders server node unreachable.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return () => unsubscribe();
+  }, []);
 
-  // Load services for order form
+  // ============================================
+  // LOAD SERVICES FROM SMM API
+  // ============================================
   const loadServices = async () => {
     setLoadingServices(true);
     try {
@@ -132,68 +136,150 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
         setServices(data);
       }
     } catch (err) {
-      console.error('Failed to load services for order form:', err);
+      console.error('Failed to load services:', err);
     } finally {
       setLoadingServices(false);
     }
   };
 
-  // Initial data load
+  // ============================================
+  // LOAD USER ORDERS FROM FIRESTORE
+  // ============================================
+  const loadUserOrders = async () => {
+    if (!currentUser) {
+      setOrders([]);
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Get orders from Firestore for this specific user
+      const userOrders = await getUserOrders(currentUser.uid);
+      setOrders(userOrders);
+    } catch (err) {
+      console.error('Error loading orders:', err);
+      setError('Failed to load your orders. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================
+  // REFRESH ORDER STATUSES FROM SMM API
+  // ============================================
+  const refreshOrderStatuses = async () => {
+    if (!orders.length || !currentUser) return;
+    
+    setRefreshing(true);
+    
+    try {
+      const updatedOrders = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            // Get live status from SMM API
+            const statusData = await fetchSmmApi({
+              action: 'status',
+              order: order.orderId // Use the real order ID from SMM API
+            });
+            
+            // Update Firestore with latest status
+            await updateOrderStatus(order.id, statusData);
+            
+            // Return updated order
+            return {
+              ...order,
+              status: statusData.status,
+              remains: statusData.remains,
+              charge: statusData.charge,
+              start_count: statusData.start_count,
+              currency: statusData.currency
+            };
+          } catch (err) {
+            console.error(`Failed to update order ${order.orderId}:`, err);
+            return order; // Keep existing data
+          }
+        })
+      );
+      
+      setOrders(updatedOrders);
+    } catch (err) {
+      console.error('Status refresh failed:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // ============================================
+  // INITIAL LOADS
+  // ============================================
   useEffect(() => {
-    loadOrders();
     loadServices();
   }, []);
 
-  // Handle scroll to hide/show header
+  // Load orders when user logs in or view changes to orders
+  useEffect(() => {
+    if (currentUser && activeView === 'orders') {
+      loadUserOrders();
+    }
+  }, [currentUser, activeView]);
+
+  // Auto-refresh statuses every 30 seconds when on orders view
+  useEffect(() => {
+    if (!currentUser || activeView !== 'orders' || !orders.length) return;
+    
+    // Initial refresh
+    refreshOrderStatuses();
+    
+    // Set up interval
+    const interval = setInterval(refreshOrderStatuses, 30000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser, activeView, orders.length]);
+
+  // ============================================
+  // SCROLL HANDLERS
+  // ============================================
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
         setShowHeader(false);
       } else {
         setShowHeader(true);
       }
-      
       setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Click outside handlers
+  // ============================================
+  // CLICK OUTSIDE HANDLERS
+  // ============================================
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !(dropdownRef.current as any).contains(event.target)) {
         setFilterOpen(false);
       }
-      if (
-        dateDropdownRef.current &&
-        !dateDropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dateDropdownRef.current && !(dateDropdownRef.current as any).contains(event.target)) {
         setDateFilterOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Get service details when service is selected
+  // ============================================
+  // SERVICE SELECTION HANDLER
+  // ============================================
   useEffect(() => {
     if (selectedServiceId) {
       const service = services.find(s => s.service.toString() === selectedServiceId);
       setServiceDetails(service || null);
-      // Reset quantity if min/max changed
       if (service) {
         setQuantity(service.min.toString());
       }
@@ -202,29 +288,31 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     }
   }, [selectedServiceId, services]);
 
-  // Status filters
+  // ============================================
+  // FILTERS
+  // ============================================
   const statusFilters = useMemo(() => {
     return ['All', 'Pending', 'Processing', 'In progress', 'Completed', 'Partial', 'Canceled', 'Refunded'];
   }, []);
 
-  // Date filters
   const dateFilters = ['Today', 'Yesterday', 'Last 7 days', 'Last 30 days', 'This month', 'All time'];
 
-  // Filtered orders
+  // Filter orders based on search, status, and date
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
+      // Search filter
       const matchesSearch = 
-        order.order?.toString().includes(searchTerm) || 
-        order.id?.toString().includes(searchTerm) ||
-        (order.service && order.service.toString().includes(searchTerm)) ||
+        order.orderId?.toString().includes(searchTerm) || 
+        order.serviceId?.toString().includes(searchTerm) ||
         (order.link && order.link.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (order.service_name && order.service_name.toLowerCase().includes(searchTerm.toLowerCase()));
+        (order.serviceName && order.serviceName.toLowerCase().includes(searchTerm.toLowerCase()));
       
+      // Status filter
       const matchesStatus = activeStatus === 'All' || 
         order.status?.toLowerCase() === activeStatus.toLowerCase() ||
         order.status?.toLowerCase().includes(activeStatus.toLowerCase());
       
-      // Date filtering logic
+      // Date filter
       let matchesDate = true;
       if (dateRange !== 'All time' && order.date) {
         const orderDate = new Date(order.date);
@@ -272,6 +360,127 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     ).slice(0, 20);
   }, [services, serviceSearch]);
 
+  // ============================================
+  // ORDER STATS
+  // ============================================
+  const orderStats = useMemo(() => {
+    const total = filteredOrders.length;
+    const completed = filteredOrders.filter(o => 
+      o.status?.toLowerCase().includes('completed') || 
+      o.status?.toLowerCase().includes('success')
+    ).length;
+    const pending = filteredOrders.filter(o => 
+      o.status?.toLowerCase().includes('pending')
+    ).length;
+    const processing = filteredOrders.filter(o => 
+      o.status?.toLowerCase().includes('processing') || 
+      o.status?.toLowerCase().includes('progress')
+    ).length;
+    const totalSpent = filteredOrders.reduce((sum, order) => {
+      const charge = parseFloat(order.charge || 0);
+      return sum + (isNaN(charge) ? 0 : charge);
+    }, 0).toFixed(2);
+    
+    return { total, completed, pending, processing, totalSpent };
+  }, [filteredOrders]);
+
+  // ============================================
+  // PLACE ORDER - SAVE TO FIRESTORE
+  // ============================================
+  const placeOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentUser) {
+      setOrderError('You must be logged in to place an order');
+      return;
+    }
+
+    if (!selectedServiceId || !link || !quantity) {
+      setOrderError('Service, link, and quantity are required');
+      return;
+    }
+
+    setOrderLoading(true);
+    setOrderError('');
+    setOrderSuccess(null);
+
+    try {
+      // Prepare API parameters
+      const params: Record<string, string> = {
+        action: 'add',
+        service: selectedServiceId,
+        link: link,
+        quantity: quantity
+      };
+
+      // Add optional parameters
+      if (customComments) params.comments = customComments;
+      if (usernames) params.usernames = usernames;
+
+      // 1. Call SMM API to place order
+      const data = await fetchSmmApi(params);
+      
+      if (data && data.order) {
+        // 2. Calculate charge
+        const calculatedCharge = serviceDetails 
+          ? ((parseInt(quantity) / 1000) * parseFloat(serviceDetails.rate)).toFixed(2)
+          : '0.00';
+
+        // 3. Save order to Firestore with user ID
+        const orderData = {
+          orderId: data.order,
+          serviceId: selectedServiceId,
+          serviceName: serviceDetails?.name || `Service #${selectedServiceId}`,
+          link: link,
+          quantity: parseInt(quantity),
+          charge: calculatedCharge,
+          status: 'Pending',
+          remains: parseInt(quantity),
+          date: new Date().toISOString()
+        };
+
+        await saveOrderToFirestore(currentUser.uid, orderData);
+        
+        // 4. Show success message
+        setOrderSuccess({
+          order: data.order,
+          message: 'Order placed successfully!'
+        });
+        
+        // 5. Reset form
+        setSelectedService('');
+        setSelectedServiceId('');
+        setServiceDetails(null);
+        setLink('');
+        setQuantity('');
+        setCustomComments('');
+        setUsernames('');
+        setServiceSearch('');
+        setShowServiceDropdown(false);
+        
+        // 6. Reload orders
+        await loadUserOrders();
+        
+        // 7. Switch to orders view after 2 seconds
+        setTimeout(() => {
+          setActiveView('orders');
+          setOrderSuccess(null);
+        }, 2000);
+      } else if (data && data.error) {
+        setOrderError(data.error);
+      } else {
+        setOrderError('Failed to place order. Unknown response.');
+      }
+    } catch (err: any) {
+      setOrderError(err.message || 'Order placement failed. Please try again.');
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  // ============================================
+  // UTILITY FUNCTIONS
+  // ============================================
   const handleLoadMore = () => {
     setVisibleCount(prev => prev + PAGE_SIZE);
   };
@@ -287,94 +496,18 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     setLastScrollY(0);
   };
 
-  // Place order API call
-  const placeOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedServiceId || !link || !quantity) {
-      setOrderError('Service, link, and quantity are required');
-      return;
-    }
-
-    setOrderLoading(true);
-    setOrderError('');
-    setOrderSuccess(null);
-
-    try {
-      const params: Record<string, string> = {
-        action: 'add',
-        service: selectedServiceId,
-        link: link,
-        quantity: quantity
-      };
-
-      // Add optional parameters
-      if (customComments) params.comments = customComments;
-      if (usernames) params.usernames = usernames;
-
-      const data = await fetchSmmApi(params);
-      
-      if (data && data.order) {
-        setOrderSuccess({
-          order: data.order,
-          message: 'Order placed successfully!'
-        });
-        
-        // Reset form
-        setSelectedService('');
-        setSelectedServiceId('');
-        setServiceDetails(null);
-        setLink('');
-        setQuantity('');
-        setCustomComments('');
-        setUsernames('');
-        
-        // Reload orders
-        loadOrders();
-        
-        // Switch to orders view after 3 seconds
-        setTimeout(() => {
-          setActiveView('orders');
-          setOrderSuccess(null);
-        }, 3000);
-      } else if (data && data.error) {
-        setOrderError(data.error);
-      } else {
-        setOrderError('Failed to place order. Unknown response.');
-      }
-    } catch (err: any) {
-      setOrderError(err.message || 'Order placement failed. Server node unreachable.');
-    } finally {
-      setOrderLoading(false);
-    }
-  };
-
-  // Calculate order stats
-  const orderStats = useMemo(() => {
-    const total = filteredOrders.length;
-    const completed = filteredOrders.filter(o => 
-      o.status?.toLowerCase().includes('completed') || 
-      o.status?.toLowerCase().includes('success')
-    ).length;
-    const pending = filteredOrders.filter(o => 
-      o.status?.toLowerCase().includes('pending')
-    ).length;
-    const processing = filteredOrders.filter(o => 
-      o.status?.toLowerCase().includes('processing') || 
-      o.status?.toLowerCase().includes('progress')
-    ).length;
-    const totalSpent = filteredOrders.reduce((sum, order) => {
-      const charge = parseFloat(order.charge || order.price || 0);
-      return sum + (isNaN(charge) ? 0 : charge);
-    }, 0).toFixed(2);
-    
-    return { total, completed, pending, processing, totalSpent };
-  }, [filteredOrders]);
-
-  // Copy order ID to clipboard
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text.toString());
   };
 
+  const handleManualRefresh = async () => {
+    await loadUserOrders();
+    await refreshOrderStatuses();
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="relative animate-fade-in pb-32">
       {/* Invisible anchor at very top for scroll reference */}
@@ -395,7 +528,9 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
                 <Activity size={10} className="text-blue-500 animate-pulse" />
                 {activeView === 'orders' 
-                  ? `${filteredOrders.length} Active Transactions` 
+                  ? currentUser 
+                    ? `${filteredOrders.length} Active Transactions` 
+                    : 'Sign in to view orders'
                   : 'Deploy New Order'
                 }
               </p>
@@ -419,6 +554,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
               </button>
               <button
                 onClick={() => {
+                  if (!currentUser) {
+                    setOrderError('Please sign in to place an order');
+                    return;
+                  }
                   setActiveView('new');
                   setOrderSuccess(null);
                   setOrderError('');
@@ -433,19 +572,21 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                 New Order
               </button>
               
-              <button 
-                onClick={loadOrders} 
-                disabled={loading}
-                className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95"
-              >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                <span className="text-[9px] font-black uppercase tracking-widest">Sync</span>
-              </button>
+              {currentUser && activeView === 'orders' && (
+                <button 
+                  onClick={handleManualRefresh} 
+                  disabled={loading || refreshing}
+                  className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95"
+                >
+                  <RefreshCw size={14} className={(loading || refreshing) ? 'animate-spin' : ''} />
+                  <span className="text-[9px] font-black uppercase tracking-widest">Sync</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Stats Cards - Desktop */}
-          {activeView === 'orders' && (
+          {activeView === 'orders' && currentUser && (
             <div className="hidden md:grid grid-cols-4 gap-4 pt-2">
               <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 p-4">
                 <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Total Orders</p>
@@ -469,7 +610,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       </div>
 
       {/* Sticky Mini Header - Only appears when main header is hidden */}
-      {!showHeader && activeView === 'orders' && (
+      {!showHeader && activeView === 'orders' && currentUser && (
         <div className="sticky top-0 z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-3 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row gap-2 md:gap-3">
@@ -518,9 +659,21 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
         </div>
       )}
 
-      {/* Main Content Area - mt-1.5 pt-1.5 for 6px padding */}
+      {/* Main Content Area */}
       <div className="mt-1.5 pt-1.5">
-        {activeView === 'orders' ? (
+        {!currentUser ? (
+          {/* Not logged in state */}
+          <div className="max-w-3xl mx-auto py-20 text-center">
+            <div className="bg-white dark:bg-white/5 rounded-[2.5rem] border border-slate-200 dark:border-white/10 p-12">
+              <Activity size={48} className="mx-auto text-slate-400 mb-4" />
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Sign In Required</h3>
+              <p className="text-sm text-slate-500 mb-6">Please sign in to view your orders and place new missions</p>
+              <button className="px-8 py-4 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest">
+                Sign In
+              </button>
+            </div>
+          </div>
+        ) : activeView === 'orders' ? (
           /* ORDERS VIEW */
           <>
             {/* Desktop Orders Table */}
@@ -591,9 +744,25 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                       </div>
                     )}
                   </div>
+
+                  {/* Manual refresh button for mobile/desktop */}
+                  <button 
+                    onClick={handleManualRefresh} 
+                    disabled={loading || refreshing}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-blue-500 transition-all md:hidden"
+                  >
+                    <RefreshCw size={12} className={(loading || refreshing) ? 'animate-spin' : ''} />
+                    Sync
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {(refreshing) && (
+                    <span className="text-[9px] font-bold text-blue-500 flex items-center gap-1">
+                      <Loader2 size={10} className="animate-spin" />
+                      Updating...
+                    </span>
+                  )}
                   <span className="text-[9px] font-bold text-slate-400">
                     Showing {visibleOrders.length} of {filteredOrders.length}
                   </span>
@@ -611,7 +780,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                     <th className="px-6 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Charge</th>
                     <th className="px-6 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Status</th>
                     <th className="px-6 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                    <th className="px-6 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Action</th>
+                    <th className="px-6 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Remains</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -628,12 +797,12 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                       const StatusIcon = statusBadge.icon;
                       
                       return (
-                        <tr key={order.id || order.order} className="hover:bg-blue-600/5 transition-all group cursor-default">
+                        <tr key={order.id} className="hover:bg-blue-600/5 transition-all group cursor-default">
                           <td className="px-6 py-5">
                             <div className="flex items-center gap-2">
-                              <span className="font-black text-blue-600 text-xs">#{order.order || order.id}</span>
+                              <span className="font-black text-blue-600 text-xs">#{order.orderId}</span>
                               <button 
-                                onClick={() => copyToClipboard(order.order || order.id)}
+                                onClick={() => copyToClipboard(order.orderId)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Copy size={12} className="text-slate-400 hover:text-blue-500" />
@@ -642,10 +811,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                           </td>
                           <td className="px-6 py-5">
                             <p className="font-bold text-slate-900 dark:text-white text-xs">
-                              {order.service_name || `Service #${order.service}`}
+                              {order.serviceName}
                             </p>
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                              ID: {order.service}
+                              ID: {order.serviceId}
                             </p>
                           </td>
                           <td className="px-6 py-5">
@@ -664,10 +833,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                             )}
                           </td>
                           <td className="px-6 py-5 font-bold text-slate-900 dark:text-white text-sm">
-                            {order.quantity?.toLocaleString() || order.charge}
+                            {order.quantity?.toLocaleString()}
                           </td>
                           <td className="px-6 py-5 font-black text-slate-900 dark:text-white text-sm">
-                            ${parseFloat(order.charge || order.price || 0).toFixed(2)}
+                            ${parseFloat(order.charge || 0).toFixed(2)}
                           </td>
                           <td className="px-6 py-5">
                             <span className={`${statusBadge.color} border text-[8px] font-black px-2 py-1 rounded-md flex items-center gap-1 w-fit`}>
@@ -678,10 +847,8 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                           <td className="px-6 py-5 text-[10px] font-medium text-slate-500">
                             {order.date ? formatDate(order.date) : '—'}
                           </td>
-                          <td className="px-6 py-5 text-center">
-                            <button className="p-2 text-slate-500 hover:text-blue-600 transition-colors">
-                              <Eye size={16} />
-                            </button>
+                          <td className="px-6 py-5 text-center font-bold text-slate-900 dark:text-white">
+                            {order.remains?.toLocaleString() || '0'}
                           </td>
                         </tr>
                       );
@@ -772,10 +939,11 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                 </div>
 
                 <button 
-                  onClick={loadOrders} 
+                  onClick={handleManualRefresh} 
+                  disabled={loading || refreshing}
                   className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl"
                 >
-                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                  <RefreshCw size={14} className={(loading || refreshing) ? 'animate-spin' : ''} />
                 </button>
               </div>
 
@@ -804,26 +972,29 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                   
                   return (
                     <div 
-                      key={order.id || order.order} 
+                      key={order.id} 
                       className="bg-white dark:bg-white/5 p-5 rounded-[1.8rem] border border-slate-200 dark:border-white/10 shadow-sm"
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
                           <span className="text-[9px] font-black text-blue-500 uppercase bg-blue-500/10 px-2 py-1 rounded-md">
-                            #{order.order || order.id}
+                            #{order.orderId}
                           </span>
                           <span className={`${statusBadge.color} border text-[8px] font-black px-2 py-1 rounded-md flex items-center gap-1`}>
                             <StatusIcon size={10} />
                             {statusBadge.text}
                           </span>
                         </div>
-                        <button className="p-2 text-slate-500 hover:text-blue-600">
-                          <Eye size={16} />
+                        <button 
+                          onClick={() => copyToClipboard(order.orderId)}
+                          className="p-2 text-slate-500 hover:text-blue-600"
+                        >
+                          <Copy size={14} />
                         </button>
                       </div>
 
                       <h4 className="font-black text-slate-900 dark:text-white text-sm mb-2">
-                        {order.service_name || `Service #${order.service}`}
+                        {order.serviceName}
                       </h4>
 
                       {order.link && (
@@ -831,10 +1002,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                           href={order.link} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[10px] font-medium text-blue-600 mb-3"
+                          className="flex items-center gap-1 text-[10px] font-medium text-blue-600 mb-3 truncate"
                         >
                           <Link2 size={10} />
-                          {order.link.substring(0, 30)}...
+                          {order.link.substring(0, 40)}...
                         </a>
                       )}
 
@@ -842,13 +1013,13 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                         <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Quantity</p>
                           <p className="text-sm font-black text-slate-900 dark:text-white">
-                            {order.quantity?.toLocaleString() || '—'}
+                            {order.quantity?.toLocaleString()}
                           </p>
                         </div>
                         <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Charge</p>
                           <p className="text-sm font-black text-blue-600">
-                            ${parseFloat(order.charge || order.price || 0).toFixed(2)}
+                            ${parseFloat(order.charge || 0).toFixed(2)}
                           </p>
                         </div>
                         <div>
@@ -1127,7 +1298,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
                 <div className="flex flex-col md:flex-row gap-3 pt-4">
                   <button
                     type="submit"
-                    disabled={orderLoading || !selectedServiceId || !link || !quantity}
+                    disabled={orderLoading || !selectedServiceId || !link || !quantity || !currentUser}
                     className="flex-1 bg-blue-600 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {orderLoading ? (
@@ -1165,12 +1336,12 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       </button>
 
       {/* Error State */}
-      {error && !loading && activeView === 'orders' && (
+      {error && !loading && activeView === 'orders' && currentUser && (
         <div className="py-20 text-center">
           <div className="bg-red-500/10 text-red-500 p-8 rounded-[2rem] border border-red-500/20 max-w-sm mx-auto inline-block">
             <Zap size={24} className="mx-auto mb-3" />
             <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
-            <button onClick={loadOrders} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg text-[9px] font-black uppercase">
+            <button onClick={handleManualRefresh} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg text-[9px] font-black uppercase">
               Force Re-Entry
             </button>
           </div>
