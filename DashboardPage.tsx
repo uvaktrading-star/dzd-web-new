@@ -13,7 +13,8 @@ import {
   Zap, 
   Wallet,
   Menu,
-  Activity
+  Activity,
+  Ticket
 } from 'lucide-react';
 import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
@@ -89,11 +90,11 @@ export default function DashboardPage({ user }: any) {
   if (!user) return <Navigate to="/" />;
 
   const menuItems = [
-    { id: 'home', label: 'Command Hub', icon: <LayoutGrid />, color: 'text-blue-500' },
-    { id: 'services', label: 'Protocols', icon: <List />, color: 'text-indigo-500' },
-    { id: 'orders', label: 'Mission Logs', icon: <History />, color: 'text-pink-500' },
-    { id: 'billing', label: 'Financials', icon: <CreditCard />, color: 'text-amber-500' },
-    { id: 'settings', label: 'Terminal', icon: <Settings />, color: 'text-slate-500' }
+    { id: 'home', label: 'Dashboard', icon: <LayoutGrid />, color: 'text-blue-500' },
+    { id: 'services', label: 'Services', icon: <List />, color: 'text-indigo-500' },
+    { id: 'orders', label: 'Orders', icon: <History />, color: 'text-pink-500' },
+    { id: 'Wallet', label: 'Wallet', icon: <Wallet />, color: 'text-amber-500' },
+    { id: 'tickets', label: 'Tickets', icon: <Ticket />, color: 'text-slate-500' }
   ];
 
   return (
