@@ -177,32 +177,43 @@ const scrollToTop = () => {
   <div className="relative">
     <button
       onClick={() => setCategoriesOpen(!categoriesOpen)}
-      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+      className="flex items-center justify-between w-40 px-5 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl font-bold text-sm shadow-md hover:shadow-xl transition-all hover:bg-blue-50 dark:hover:bg-slate-800 focus:outline-none"
     >
       Categories
-      <ChevronUp className={`w-4 h-4 transform transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
+      <ChevronUp
+        className={`w-4 h-4 transform transition-transform duration-300 ${
+          categoriesOpen ? 'rotate-180' : ''
+        }`}
+      />
     </button>
 
     {/* Dropdown Menu */}
     {categoriesOpen && (
-      <div className="absolute z-50 mt-2 w-60 max-h-72 overflow-y-auto bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg p-3">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => { setActiveCategory(cat); setVisibleCount(25); setCategoriesOpen(false); }}
-            className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide mb-1 transition-colors ${
-              activeCategory === cat
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="absolute z-50 mt-2 w-60 max-h-80 overflow-y-auto bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-2xl shadow-lg p-3 animate-fade-in">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveCategory(cat);
+                setVisibleCount(25);
+                setCategoriesOpen(false);
+              }}
+              className={`flex items-center justify-center px-3 py-2 rounded-xl text-sm font-black uppercase tracking-wide transition-all duration-200 ${
+                activeCategory === cat
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
     )}
   </div>
 </div>
+
           </div>
         </div>
       </div>
