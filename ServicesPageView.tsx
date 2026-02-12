@@ -30,40 +30,28 @@ export default function ServicesPageView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [hideHeader, setHideHeader] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const lastScrollY = useRef(0);
 
   const PAGE_SIZE = 40;
 
-  // Scroll detection for header - FIXED to show on initial load
+  // Simple scroll detection
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // For mobile - hide when scrolling down, show when at top
-      if (window.innerWidth < 768) {
-        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          setIsHeaderVisible(false);
-        } else if (currentScrollY < 50) {
-          setIsHeaderVisible(true);
-        }
+      // Hide header when scrolling down, show when at top
+      if (currentScrollY > 50) {
+        setHideHeader(true);
       } else {
-        // For desktop - ALWAYS SHOW HEADER, no hiding
-        setIsHeaderVisible(true);
+        setHideHeader(false);
       }
-
-      // Show scroll to top button when scrolled down
-      setShowScrollTop(currentScrollY > 300);
       
-      lastScrollY.current = currentScrollY;
+      // Show scroll button when scrolled down
+      setShowScrollTop(currentScrollY > 300);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // IMPORTANT: Set header visible on initial load
-    setIsHeaderVisible(true);
-    
+    window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -110,67 +98,65 @@ export default function ServicesPageView() {
   };
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-    setIsHeaderVisible(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* Protocol Directory Header - ALWAYS VISIBLE ON DESKTOP, hides on mobile scroll */}
+      {/* Protocol Directory Header - ALWAYS VISIBLE AT TOP, hides when scrolling down */}
       <div className={`
-        fixed md:sticky top-0 left-0 right-0 z-40 px-4 md:px-8 lg:px-12 
-        pt-4 md:pt-8 pb-4 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl 
-        border-b border-slate-200 dark:border-white/5 shadow-sm transition-transform duration-300
-        ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
-        md:translate-y-0
+        fixed top-0 left-0 right-0 z-50 px-4 md:px-8 lg:px-12
+        pt-4 pb-4 bg-[#fcfdfe] dark:bg-[#020617] border-b border-slate-200 dark:border-white/5
+        transition-transform duration-300
+        ${hideHeader ? '-translate-y-full' : 'translate-y-0'}
       `}>
-        <div className="max-w-7xl mx-auto space-y-3 md:space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4">
-            <div>
-              <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-                Protocol Directory
-              </h1>
-              <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
-                <Activity size={10} className="text-blue-500 animate-pulse" />
-                {filteredServices.length} Active Entry Nodes
-              </p>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
+                  Protocol Directory
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] mt-1 flex items-center gap-1">
+                  <Activity size={8} className="text-blue-500" />
+                  {filteredServices.length} ACTIVE ENTRY NODES
+                </p>
+              </div>
+              <button 
+                onClick={loadServices} 
+                disabled={loading}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 hover:text-blue-600 text-[9px] font-black uppercase tracking-widest"
+              >
+                <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+                Resync
+              </button>
             </div>
-            
-            <button 
-              onClick={loadServices} 
-              disabled={loading}
-              className="hidden md:flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95"
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span className="text-[9px] font-black uppercase tracking-widest">Resync Node</span>
-            </button>
-          </div>
 
-          <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex-1 relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
                 placeholder="Search Protocol ID or Name..." 
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(25); }}
-                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl md:rounded-2xl py-3 md:py-3.5 pl-12 pr-6 font-bold text-sm focus:border-blue-600 outline-none transition-all shadow-inner text-slate-900 dark:text-white"
+                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-sm focus:border-blue-500 outline-none"
               />
             </div>
-            
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 mask-linear-right lg:max-w-md">
+
+            {/* Categories */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {categories.slice(0, 15).map(cat => (
                 <button 
                   key={cat} 
                   onClick={() => { setActiveCategory(cat); setVisibleCount(25); }}
-                  className={`px-4 md:px-5 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
-                    activeCategory === cat 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/30' 
-                      : 'bg-white dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/5 hover:border-blue-500'
-                  }`}
+                  className={`
+                    px-4 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap border
+                    ${activeCategory === cat 
+                      ? 'bg-blue-600 text-white border-blue-600' 
+                      : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-blue-500'
+                    }
+                  `}
                 >
                   {cat}
                 </button>
@@ -180,182 +166,115 @@ export default function ServicesPageView() {
         </div>
       </div>
 
-      {/* Mobile Spacer - Adjusts based on header visibility */}
-      <div className={`
-        md:hidden transition-all duration-300
-        ${isHeaderVisible ? 'h-[140px]' : 'h-0'}
-      `} />
+      {/* Spacer - Pushes content below fixed header */}
+      <div className="h-[140px] md:h-[160px]" />
 
-      {/* Desktop Spacer - Always present for sticky header */}
-      <div className="hidden md:block h-[120px] lg:h-[140px]" />
-
+      {/* Services Content */}
       <div className="px-4 md:px-8 lg:px-12">
-        {/* Desktop Data Grid */}
-        <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2">
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">ID</th>
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Protocol Details</th>
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Rate / 1k</th>
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400">Payload Limits</th>
-                <th className="px-8 py-5 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Action</th>
+        {/* Desktop Table */}
+        <div className="hidden md:block bg-white dark:bg-[#0f172a]/40 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50 dark:bg-white/5">
+              <tr>
+                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400 text-left">ID</th>
+                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400 text-left">Protocol Details</th>
+                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400 text-left">Rate / 1k</th>
+                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400 text-left">Payload Limits</th>
+                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-slate-400 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-24 text-center">
-                    <Loader2 className="mx-auto animate-spin text-blue-600 mb-4" size={32} />
-                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">Establishing Matrix Link...</p>
+            <tbody>
+              {visibleServices.map((service: any) => (
+                <tr key={service.service} className="border-t border-slate-100 dark:border-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-950/20">
+                  <td className="px-6 py-5 font-bold text-blue-600 text-xs">#{service.service}</td>
+                  <td className="px-6 py-5">
+                    <div className="flex gap-1 mb-2 flex-wrap">
+                      {getStatusBadges(service.name).map((b, idx) => (
+                        <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded`}>{b.text}</span>
+                      ))}
+                    </div>
+                    <p className="font-bold text-slate-900 dark:text-white text-sm">{service.name}</p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">{service.category}</p>
+                  </td>
+                  <td className="px-6 py-5 font-black text-slate-900 dark:text-white">${service.rate}</td>
+                  <td className="px-6 py-5">
+                    <span className="text-[8px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/10 px-2 py-1 rounded">
+                      {service.min.toLocaleString()} - {service.max.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    <button className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors">
+                      <PlusCircle size={16} />
+                    </button>
                   </td>
                 </tr>
-              ) : visibleServices.length > 0 ? (
-                visibleServices.map((service: any) => (
-                  <tr key={service.service} className="hover:bg-blue-600/5 transition-all group cursor-default">
-                    <td className="px-8 py-6 font-black text-blue-600 text-xs">#{service.service}</td>
-                    <td className="px-8 py-6">
-                      <div className="flex gap-2 mb-2 flex-wrap">
-                        {getStatusBadges(service.name).map((b, idx) => (
-                          <span key={idx} className={`${b.color} border text-[7px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
-                        ))}
-                      </div>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-blue-500 transition-colors">
-                        {service.name}
-                      </p>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-1.5 opacity-60">
-                        <Globe size={10} /> {service.category}
-                      </p>
-                    </td>
-                    <td className="px-8 py-6 font-black text-slate-900 dark:text-white text-base">${service.rate}</td>
-                    <td className="px-8 py-6">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10">
-                        {service.min.toLocaleString()} - {service.max.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <button className="bg-blue-600 text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-600/20">
-                        <PlusCircle size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Protocol mismatch: Sector empty
-                  </td>
-                </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Mobile Grid Layout - Full Service Names */}
+        {/* Mobile Cards - Full Service Names */}
         <div className="md:hidden space-y-3">
-          {loading ? (
-            <div className="py-16 text-center">
-              <Loader2 className="mx-auto animate-spin text-blue-600" size={32} />
-              <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-4">Establishing Matrix Link...</p>
-            </div>
-          ) : visibleServices.length > 0 ? (
-            visibleServices.map((service: any) => (
-              <div key={service.service} className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm active:scale-[0.98] transition-all">
-                <div className="flex justify-between items-start gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                      <span className="text-[7px] font-black text-blue-500 uppercase bg-blue-500/10 px-1.5 py-0.5 rounded-md">
-                        ID: {service.service}
+          {visibleServices.map((service: any) => (
+            <div key={service.service} className="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10">
+              <div className="flex justify-between items-start gap-2 mb-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                    <span className="text-[7px] font-black text-blue-600 uppercase bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">
+                      ID: {service.service}
+                    </span>
+                    {getStatusBadges(service.name).map((b, idx) => (
+                      <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded`}>
+                        {b.text}
                       </span>
-                      {getStatusBadges(service.name).map((b, idx) => (
-                        <span key={idx} className={`${b.color} border text-[6px] font-black px-1.5 py-0.5 rounded-md`}>
-                          {b.text}
-                        </span>
-                      ))}
-                    </div>
-                    <h4 className="font-black text-slate-900 dark:text-white text-xs leading-normal tracking-tight break-words whitespace-normal">
-                      {service.name}
-                    </h4>
+                    ))}
                   </div>
-                  <button className="shrink-0 w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                    <PlusCircle size={18} />
-                  </button>
+                  <h4 className="font-black text-slate-900 dark:text-white text-sm leading-relaxed break-words">
+                    {service.name}
+                  </h4>
                 </div>
-                
-                <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5">
-                  <div>
-                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
-                    <p className="text-base font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
-                    <p className="text-[9px] font-black text-slate-500 tracking-tighter">
-                      {service.min.toLocaleString()} - {service.max.toLocaleString()}
-                    </p>
-                  </div>
+                <button className="shrink-0 w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                  <PlusCircle size={18} />
+                </button>
+              </div>
+              
+              <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5">
+                <div>
+                  <p className="text-[6px] font-black text-slate-400 uppercase tracking-wider">Rate / 1k</p>
+                  <p className="text-base font-black text-slate-900 dark:text-white">${service.rate}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[6px] font-black text-slate-400 uppercase tracking-wider">Payload range</p>
+                  <p className="text-[9px] font-black text-slate-600 dark:text-slate-400">
+                    {service.min.toLocaleString()} - {service.max.toLocaleString()}
+                  </p>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="py-16 text-center">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol mismatch: Sector empty</p>
             </div>
-          )}
+          ))}
         </div>
       </div>
 
-      {/* Infinite Scroll Interface */}
+      {/* Load More */}
       {!loading && filteredServices.length > visibleCount && (
-        <div className="flex flex-col items-center gap-4 mt-8 mb-10 px-4">
-          <div className="h-1 w-24 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 transition-all duration-500" 
-              style={{ width: `${(visibleCount / filteredServices.length) * 100}%` }}
-            />
-          </div>
+        <div className="flex justify-center mt-8">
           <button 
             onClick={handleLoadMore}
-            className="group flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-6 py-3.5 rounded-xl font-black text-xs text-slate-900 dark:text-white hover:border-blue-500 hover:text-blue-500 transition-all shadow-lg active:scale-95"
+            className="flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-6 py-3 rounded-xl text-xs font-black hover:border-blue-500 transition-colors"
           >
-            Load More Protocols <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            Load More Protocols <ArrowRight size={14} />
           </button>
         </div>
       )}
 
-      {/* Floating Scroll To Top Button */}
+      {/* Scroll to Top Button */}
       {showScrollTop && (
         <button 
           onClick={scrollToTop}
-          className="fixed bottom-24 right-6 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-2xl border border-white/20 z-50 md:hidden active:scale-90 transition-all hover:bg-blue-700"
+          className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg z-50"
         >
           <ChevronUp size={24} />
         </button>
-      )}
-      
-      {/* Desktop Scroll to Top */}
-      {showScrollTop && (
-        <button 
-          onClick={scrollToTop}
-          className="fixed bottom-10 right-10 w-10 h-10 bg-white dark:bg-slate-900 rounded-full hidden md:flex items-center justify-center text-blue-600 shadow-2xl border border-slate-200 dark:border-white/10 z-50 active:scale-90 transition-all hover:bg-blue-600 hover:text-white"
-        >
-          <ChevronUp size={20} />
-        </button>
-      )}
-
-      {/* Error States */}
-      {error && !loading && (
-        <div className="py-16 text-center px-4">
-          <div className="bg-red-500/10 text-red-500 p-6 rounded-2xl border border-red-500/20 max-w-sm mx-auto inline-block">
-            <Zap size={24} className="mx-auto mb-3" />
-            <p className="text-[9px] font-black uppercase tracking-widest">{error}</p>
-            <button 
-              onClick={loadServices} 
-              className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg text-[8px] font-black uppercase"
-            >
-              Force Re-Entry
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );
