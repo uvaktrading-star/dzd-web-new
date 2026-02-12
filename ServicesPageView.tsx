@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, 
@@ -31,9 +30,27 @@ export default function ServicesPageView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 40;
+
+  // Scroll detection for mobile header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Hide header after scrolling down 60px, show when scrolling up near top
+      if (currentScrollY > 60) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const loadServices = async () => {
     setLoading(true);
@@ -79,8 +96,14 @@ export default function ServicesPageView() {
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* Sticky Command Bridge - Frosted UI */}
-      <div className="sticky top-[-2rem] md:top-[-3rem] z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-4 bg-[#fcfdfe]/80 dark:bg-[#020617]/80 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all">
+      {/* Sticky Command Bridge - Frosted UI - Hides on mobile scroll */}
+      <div className={`
+        sticky top-[-2rem] md:top-[-3rem] z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 
+        pt-6 md:pt-8 pb-4 bg-[#fcfdfe]/80 dark:bg-[#020617]/80 backdrop-blur-2xl 
+        border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300
+        ${isHeaderVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
+        md:translate-y-0 md:opacity-100 md:pointer-events-auto
+      `}>
         <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -127,6 +150,12 @@ export default function ServicesPageView() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Spacer - Prevents content jump when header hides */}
+      <div className={`
+        md:hidden transition-all duration-300
+        ${isHeaderVisible ? 'h-0' : 'h-[70px]'} 
+      `} />
 
       <div className="mt-8">
         {/* Desktop Data Grid */}
@@ -187,36 +216,45 @@ export default function ServicesPageView() {
         {/* Mobile Grid Layout - Dynamic Cards */}
         <div className="md:hidden space-y-4">
           {loading ? (
-             <div className="py-16 text-center"><Loader2 className="mx-auto animate-spin text-blue-600" /></div>
-          ) : visibleServices.map((service: any) => (
-            <div key={service.service} className="bg-white dark:bg-white/5 p-5 rounded-[1.8rem] border border-slate-200 dark:border-white/10 shadow-sm active:scale-[0.98] transition-all">
-              <div className="flex justify-between items-start gap-4 mb-4">
-                 <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[8px] font-black text-blue-500 uppercase bg-blue-500/10 px-2 py-0.5 rounded-md">ID: {service.service}</span>
-                      {getStatusBadges(service.name).map((b, idx) => (
-                        <span key={idx} className={`${b.color} border text-[7px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
-                      ))}
-                    </div>
-                    <h4 className="font-black text-slate-900 dark:text-white text-sm leading-tight tracking-tight">{service.name}</h4>
-                 </div>
-                 <button className="shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                   <PlusCircle size={20} />
-                 </button>
+             <div className="py-16 text-center">
+               <Loader2 className="mx-auto animate-spin text-blue-600" size={32} />
+               <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-4">Establishing Matrix Link...</p>
+             </div>
+          ) : visibleServices.length > 0 ? (
+            visibleServices.map((service: any) => (
+              <div key={service.service} className="bg-white dark:bg-white/5 p-5 rounded-[1.8rem] border border-slate-200 dark:border-white/10 shadow-sm active:scale-[0.98] transition-all">
+                <div className="flex justify-between items-start gap-4 mb-4">
+                   <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[8px] font-black text-blue-500 uppercase bg-blue-500/10 px-2 py-0.5 rounded-md">ID: {service.service}</span>
+                        {getStatusBadges(service.name).map((b, idx) => (
+                          <span key={idx} className={`${b.color} border text-[7px] font-black px-1.5 py-0.5 rounded-md`}>{b.text}</span>
+                        ))}
+                      </div>
+                      <h4 className="font-black text-slate-900 dark:text-white text-sm leading-tight tracking-tight">{service.name}</h4>
+                   </div>
+                   <button className="shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                     <PlusCircle size={20} />
+                   </button>
+                </div>
+                
+                <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
+                   <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
+                      <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
+                      <p className="text-[10px] font-black text-slate-500 tracking-tighter">{service.min.toLocaleString()} - {service.max.toLocaleString()}</p>
+                   </div>
+                </div>
               </div>
-              
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
-                 <div>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rate / 1k</p>
-                    <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">${service.rate}</p>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payload range</p>
-                    <p className="text-[10px] font-black text-slate-500 tracking-tighter">{service.min.toLocaleString()} - {service.max.toLocaleString()}</p>
-                 </div>
-              </div>
+            ))
+          ) : (
+            <div className="py-16 text-center">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol mismatch: Sector empty</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
