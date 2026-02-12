@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, BarChart3, Wallet, Activity } from 'lucide-react';
+import { 
+  Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, 
+  Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, 
+  BarChart3, Wallet, Activity 
+} from 'lucide-react';
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
   return (
@@ -39,7 +43,6 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -74,7 +77,9 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                 <Zap size={18} fill="white" />
               </div>
-              <span className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">DzD <span className="text-blue-600">Marketing</span></span>
+              <span className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                DzD <span className="text-blue-600">Marketing</span>
+              </span>
             </Link>
             
             {/* Desktop Navigation */}
@@ -96,7 +101,9 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                     <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs">
                       {(user.fullName?.[0] || user.name?.[0] || user.email?.[0] || 'U').toUpperCase()}
                     </div>
-                    <span className="text-xs font-black text-slate-900 dark:text-white hidden lg:block">{user.fullName || user.name || 'Account'}</span>
+                    <span className="text-xs font-black text-slate-900 dark:text-white hidden lg:block">
+                      {user.fullName || user.name || 'Account'}
+                    </span>
                     <ChevronDown size={12} className={`text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
                   </button>
                   
@@ -186,9 +193,9 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               </div>
             </div>
             
-            {/* Scrollable Content Area */}
+            {/* Scrollable Navigation Area */}
             <div className="flex-1 overflow-y-auto px-3 py-4">
-              {/* PUBLIC LINKS */}
+              {/* GENERAL LINKS - Always visible */}
               <div className="mb-6">
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">General</p>
                 <div className="space-y-0.5">
@@ -250,83 +257,88 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               )}
             </div>
             
-            {/* ACCOUNT SECTION - FIXED AT BOTTOM */}
+            {/* ACCOUNT SECTION - Fixed at bottom with PERFECT ALIGNMENT */}
             <div className="border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#0a0f1c]">
               {user ? (
                 <div className="p-4">
-                  {/* User Info Card - Fixed width and alignment */}
-                  <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-black text-sm">
-                        {(user.fullName?.[0] || user.name?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                          {user.fullName || user.name || 'User'}
-                        </p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {user.email}
-                        </p>
-                      </div>
+                  {/* User Info - Left aligned vertical stack */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-black text-sm">
+                      {(user.fullName?.[0] || user.name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                        {user.fullName || user.name || 'User'}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
                   
-                  {/* Balance & Stats - Row layout */}
-                  <div className="flex items-center justify-between mb-3 px-1">
-                    <div className="flex items-center gap-1.5">
-                      <Wallet size={14} className="text-slate-400" />
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">$0.00</span>
-                      <span className="text-[8px] font-bold text-green-600 bg-green-100 dark:bg-green-950/30 px-1.5 py-0.5 rounded-full ml-1">AVAILABLE</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Activity size={14} className="text-slate-400" />
-                      <span className="text-xs font-bold text-blue-600">12</span>
-                      <span className="text-[8px] font-medium text-slate-500">ACTIVE</span>
-                    </div>
+                  {/* Balance - Left aligned on its own line */}
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <Wallet size={14} className="text-slate-400 flex-shrink-0" />
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300">$0.00</span>
+                    <span className="text-[8px] font-bold text-green-600 bg-green-100 dark:bg-green-950/30 px-1.5 py-0.5 rounded-full">
+                      AVAILABLE
+                    </span>
                   </div>
                   
-                  {/* Action Buttons - Clean layout */}
-                  <div className="space-y-1">
+                  {/* Active Orders - Left aligned on its own line */}
+                  <div className="flex items-center gap-2 mb-4 px-1">
+                    <Activity size={14} className="text-slate-400 flex-shrink-0" />
+                    <span className="text-xs font-bold text-blue-600">12</span>
+                    <span className="text-[8px] font-medium text-slate-500">ACTIVE</span>
+                  </div>
+                  
+                  {/* Action Buttons - Full width, left aligned */}
+                  <div className="space-y-1 mb-4">
                     <button
                       onClick={() => {}}
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                     >
-                      <User size={16} className="text-slate-500" />
-                      Profile
+                      <User size={16} className="text-slate-500 flex-shrink-0" />
+                      <span className="text-left">Profile</span>
                     </button>
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
                     >
-                      <LogOut size={16} />
-                      Sign Out
+                      <LogOut size={16} className="flex-shrink-0" />
+                      <span className="text-left">Sign Out</span>
                     </button>
+                  </div>
+                  
+                  {/* Footer - Left aligned */}
+                  <div className="flex items-center gap-3 pt-2 text-[8px] font-medium text-slate-400 border-t border-slate-100 dark:border-white/5">
+                    <span className="uppercase tracking-wider">v2.0.0</span>
+                    <span>© 2024 DZD</span>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 space-y-2">
-                  <button
-                    onClick={() => { onLoginClick(); closeMobileMenu(); }}
-                    className="w-full px-4 py-2.5 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => { onSignupClick(); closeMobileMenu(); }}
-                    className="w-full px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create Account
-                  </button>
+                <div className="p-4">
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => { onLoginClick(); closeMobileMenu(); }}
+                      className="w-full px-4 py-2.5 text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => { onSignupClick(); closeMobileMenu(); }}
+                      className="w-full px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Create Account
+                    </button>
+                  </div>
+                  {/* Footer for non-logged in users */}
+                  <div className="flex items-center gap-3 mt-4 pt-2 text-[8px] font-medium text-slate-400 border-t border-slate-100 dark:border-white/5">
+                    <span className="uppercase tracking-wider">v2.0.0</span>
+                    <span>© 2024 DZD</span>
+                  </div>
                 </div>
               )}
-              
-              {/* Footer - Attached to bottom of account section */}
-              <div className="px-4 pb-4 pt-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-medium text-slate-400 uppercase tracking-wider">v2.0.0</span>
-                  <span className="text-[8px] font-medium text-slate-400">© 2024 DzD</span>
-                </div>
-              </div>
             </div>
           </div>
         </>
@@ -342,11 +354,11 @@ const NavItem = ({ icon, label, onClick, badge }: { icon: React.ReactNode, label
     className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
   >
     <span className="flex items-center gap-3">
-      <span className="text-slate-500 dark:text-slate-400">{icon}</span>
-      {label}
+      <span className="text-slate-500 dark:text-slate-400 flex-shrink-0">{icon}</span>
+      <span className="text-left">{label}</span>
     </span>
     {badge && (
-      <span className="text-[8px] font-bold bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded-full">
+      <span className="text-[8px] font-bold bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
         {badge}
       </span>
     )}

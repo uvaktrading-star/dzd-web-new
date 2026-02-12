@@ -18,6 +18,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupPage({
   onSignup,
@@ -37,6 +38,7 @@ export default function SignupPage({
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -44,10 +46,14 @@ export default function SignupPage({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  // ✅ FORM SUBMIT - Redirect to Login Page
   const handleAuthSuccess = () => {
     setSuccess(true);
     setTimeout(() => {
-      window.location.href = '/'; 
+      onClose(); // Close signup modal
+      onSwitchToLogin(); // Switch to login modal
+      setSuccess(false);
+      setLoading(false);
     }, 2000);
   };
 
@@ -64,15 +70,22 @@ export default function SignupPage({
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const userData = { fullName, username, email, onboarded: false, createdAt: new Date().toISOString() };
+      const userData = { 
+        fullName, 
+        username, 
+        email, 
+        onboarded: false, 
+        createdAt: new Date().toISOString() 
+      };
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
-      handleAuthSuccess();
+      handleAuthSuccess(); // ✅ Shows success then opens login modal
     } catch (error: any) {
       alert(error.message);
       setLoading(false);
     }
   };
 
+  // ✅ GOOGLE SIGNUP - Redirect to Dashboard
   const handleGoogleSignup = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
@@ -86,7 +99,11 @@ export default function SignupPage({
         createdAt: new Date().toISOString()
       };
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
-      handleAuthSuccess();
+      
+      // ✅ Close modal and redirect to dashboard
+      onClose();
+      navigate('/dashboard');
+      
     } catch (error: any) {
       alert(error.message);
       setLoading(false);
@@ -144,7 +161,7 @@ export default function SignupPage({
             </div>
           </div>
 
-          {/* Form Side - Full width on mobile, centered */}
+          {/* Form Side */}
           <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-8 lg:p-16 min-h-screen sm:min-h-0">
             <div className="w-full max-w-md mx-auto">
               {/* Mobile Header Branding */}
@@ -307,7 +324,8 @@ export default function SignupPage({
                 
                 <button
                   onClick={handleGoogleSignup}
-                  className="w-full h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-3 font-semibold text-slate-700 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
+                  disabled={loading}
+                  className="w-full h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-3 font-semibold text-slate-700 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -333,23 +351,19 @@ export default function SignupPage({
         </div>
       </div>
 
-      {/* Premium Success Overlay - Fixed: Full overlay that blocks all background content */}
+      {/* Premium Success Overlay - For Form Signup Only */}
       {success && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl animate-fade-in">
-          {/* Dark overlay to completely hide background content */}
           <div className="absolute inset-0 bg-black/60" onClick={(e) => e.stopPropagation()} />
           
-          {/* Success Card - Perfectly centered with no background bleed */}
           <div className="relative z-[210] w-full max-w-[320px] sm:max-w-md mx-auto">
             <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl sm:rounded-[2.5rem] text-center shadow-[0_0_80px_rgba(37,99,235,0.3)] animate-scale-in">
-              {/* Icon with glow effect */}
               <div className="flex justify-center mb-6 sm:mb-8">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-600/50 ring-4 ring-blue-600/20">
                   <Check size={36} className="sm:w-12 sm:h-12" strokeWidth={3} />
                 </div>
               </div>
               
-              {/* Success Message */}
               <div className="space-y-3">
                 <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tighter uppercase">
                   Congratulations!
@@ -357,14 +371,13 @@ export default function SignupPage({
                 
                 <div className="space-y-1">
                   <p className="text-blue-200/90 text-sm sm:text-base font-bold tracking-[0.2em] uppercase">
-                    Identity Secured.
+                    Account Created Successfully!
                   </p>
                   <p className="text-blue-200/70 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase">
-                    Initializing Account...
+                    Redirecting to Login...
                   </p>
                 </div>
                 
-                {/* Loading Indicator */}
                 <div className="flex justify-center mt-6">
                   <div className="w-12 h-12 rounded-full border-4 border-blue-600/20 border-t-blue-600 animate-spin" />
                 </div>

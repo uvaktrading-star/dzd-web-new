@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { 
@@ -18,7 +19,6 @@ import {
 import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
 import OrdersPageView from './OrdersPageView';
-import TicketsPageView from './Tickets'; // 👈 IMPORT YOUR TICKETS PAGE
 
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
@@ -94,7 +94,7 @@ export default function DashboardPage({ user }: any) {
     { id: 'services', label: 'Services', icon: <List />, color: 'text-indigo-500' },
     { id: 'orders', label: 'Orders', icon: <History />, color: 'text-pink-500' },
     { id: 'Wallet', label: 'Wallet', icon: <Wallet />, color: 'text-amber-500' },
-    { id: 'tickets', label: 'Tickets', icon: <Ticket />, color: 'text-slate-500' } // 👈 This is already here, good!
+    { id: 'tickets', label: 'Tickets', icon: <Ticket />, color: 'text-slate-500' }
   ];
 
   return (
@@ -161,81 +161,77 @@ export default function DashboardPage({ user }: any) {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main
-        ref={mainRef}
-        className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-8 lg:p-12 relative pb-32 md:pb-12 bg-[#fcfdfe] dark:bg-[#020617]"
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
+{/* MAIN CONTENT AREA */}
+<main
+  ref={mainRef}
+  className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-8 lg:p-12 relative pb-32 md:pb-12 bg-[#fcfdfe] dark:bg-[#020617]"
+>
+  <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
 
-        <div className="max-w-6xl mx-auto relative z-10">
-          {activeTab === 'home' && <DashboardHomeView user={user} balance={balance} />}
-          
-          {activeTab === 'services' && (
-            <ServicesPageView scrollContainerRef={mainRef} />
-          )}
-          
-          {activeTab === 'orders' && (
-            <OrdersPageView scrollContainerRef={mainRef} />
-          )}
-          
-          {/* 👇 ADD YOUR TICKETS PAGE HERE 👇 */}
-          {activeTab === 'tickets' && (
-            <TicketsPageView scrollContainerRef={mainRef} />
-          )}
-          
-          {!['home', 'services', 'orders', 'tickets'].includes(activeTab) && ( // 👈 Updated this array too
-            <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
-              <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
-                <Activity size={40} className="animate-pulse" />
-              </div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Node: {activeTab}</h2>
-              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-sm leading-relaxed">
-                Establishing encrypted link to the {activeTab} protocol hub.
-              </p>
-            </div>
-          )}
+  <div className="max-w-6xl mx-auto relative z-10">
+    {activeTab === 'home' && <DashboardHomeView user={user} balance={balance} />}
+    
+    {activeTab === 'services' && (
+      <ServicesPageView scrollContainerRef={mainRef} />
+    )}
+    
+    {activeTab === 'orders' && (
+      <OrdersPageView scrollContainerRef={mainRef} />
+    )}
+    
+    {!['home', 'services', 'orders'].includes(activeTab) && (
+      <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
+        <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
+          <Activity size={40} className="animate-pulse" />
         </div>
-      </main>
+        <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white mb-3">Node: {activeTab}</h2>
+        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-sm leading-relaxed">
+          Establishing encrypted link to the {activeTab} protocol hub.
+        </p>
+      </div>
+    )}
+  </div>
+</main>
 
-      {/* MOBILE BOTTOM NAV - Icon + Label */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-2 z-50">
+{/* MOBILE BOTTOM NAV - Icon + Label */}
+<nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-2 z-50">
 
-        {menuItems.slice(0, 4).map(item => {
-          const isActive = activeTab === item.id;
+  {menuItems.slice(0, 4).map(item => {
+    const isActive = activeTab === item.id;
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
-                isActive 
-                  ? 'text-blue-600 dark:text-blue-400' 
-                  : 'text-slate-500'
-              }`}
-            >
-              {React.cloneElement(item.icon as any, {
-                size: 20,
-                strokeWidth: isActive ? 2.5 : 2
-              })}
-
-              <span className={`text-[10px] mt-1 font-semibold tracking-wide ${
-                isActive ? 'opacity-100' : 'opacity-80'
-              }`}>
-                {item.label.split(' ')[0]}
-              </span>
-            </button>
-          );
+    return (
+      <button
+        key={item.id}
+        onClick={() => setActiveTab(item.id)}
+        className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
+          isActive 
+            ? 'text-blue-600 dark:text-blue-400' 
+            : 'text-slate-500'
+        }`}
+      >
+        {React.cloneElement(item.icon as any, {
+          size: 20,
+          strokeWidth: isActive ? 2.5 : 2
         })}
 
-        <button className="flex flex-col items-center justify-center flex-1 h-full text-slate-500">
-          <Menu size={20} />
-          <span className="text-[10px] mt-1 font-semibold tracking-wide">
-            Menu
-          </span>
-        </button>
+        <span className={`text-[10px] mt-1 font-semibold tracking-wide ${
+          isActive ? 'opacity-100' : 'opacity-80'
+        }`}>
+          {item.label.split(' ')[0]}
+        </span>
+      </button>
+    );
+  })}
 
-      </nav>
+  <button className="flex flex-col items-center justify-center flex-1 h-full text-slate-500">
+    <Menu size={20} />
+    <span className="text-[10px] mt-1 font-semibold tracking-wide">
+      Menu
+    </span>
+  </button>
+
+</nav>
+
 
     </div>
   );

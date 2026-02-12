@@ -23,9 +23,12 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
   const handleAuthSuccess = (userData: any) => {
     setSuccess(true);
     setError('');
+    onLogin(userData); // Update parent component state
+    
     setTimeout(() => {
-      window.location.href = '/'; 
-    }, 2000);
+      onClose(); // Close login modal
+      navigate('/dashboard'); // ✅ Redirect to dashboard (NOT window.location.href)
+    }, 1500);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +87,7 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
                 <Check size={32} strokeWidth={3} />
               </div>
               <h2 className="text-2xl font-black text-white mb-3 tracking-tighter uppercase">Access Granted</h2>
-              <p className="text-blue-200/60 text-xs font-bold tracking-[0.2em] uppercase leading-relaxed">Logging success.<br />Redirecting to homepage...</p>
+              <p className="text-blue-200/60 text-xs font-bold tracking-[0.2em] uppercase leading-relaxed">Login successful.<br />Redirecting to dashboard...</p>
             </div>
           </div>
         )}
@@ -237,10 +240,9 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 lg:h-14 rounded-xl shadow-2xl shadow-blue-600/20 flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-[0.2em] text-xs lg:text-sm mt-4 lg:mt-6"
                 >
                   {loading ? (
-                    // ✅ CORRECT - merge them into one
-<Loader2 className="animate-spin lg:w-5 lg:h-5" size={18} />
+                    <Loader2 className="animate-spin lg:w-5 lg:h-5" size={18} />
                   ) : (
-                    'Loging'
+                    'Login'
                   )}
                 </button>
               </form>
