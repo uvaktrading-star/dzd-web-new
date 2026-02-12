@@ -181,20 +181,30 @@ export default function DashboardPage({ user }: any) {
       </main>
 
       {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] bg-white/70 dark:bg-[#050b1a]/70 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-2.5 flex items-center justify-around shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] z-[200]">
-        {menuItems.slice(0, 4).map(item => (
-          <button 
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`p-4 rounded-[1.8rem] transition-all relative flex flex-col items-center justify-center ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/40 -translate-y-6 scale-110' : 'text-slate-500'}`}
-          >
-            {React.cloneElement(item.icon as any, { size: 22, strokeWidth: activeTab === item.id ? 2.5 : 2 })}
-          </button>
-        ))}
-        <button className="p-4 rounded-[1.8rem] text-slate-500">
-           <Menu size={22} />
-        </button>
-      </nav>
+{/* MOBILE BOTTOM NAV - Compact */}
+<nav className="md:hidden fixed bottom-0 left-0 w-full h-14 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-around z-50">
+  {menuItems.slice(0, 4).map(item => (
+    <button 
+      key={item.id}
+      onClick={() => setActiveTab(item.id)}
+      className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+        activeTab === item.id 
+          ? 'text-blue-600 dark:text-blue-400' 
+          : 'text-slate-500'
+      }`}
+    >
+      {React.cloneElement(item.icon as any, { 
+        size: 20, 
+        strokeWidth: activeTab === item.id ? 2.5 : 2 
+      })}
+    </button>
+  ))}
+
+  <button className="flex flex-col items-center justify-center flex-1 h-full text-slate-500">
+    <Menu size={20} />
+  </button>
+</nav>
+
     </div>
   );
 }
