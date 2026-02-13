@@ -20,6 +20,7 @@ import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
 import OrdersPageView from './OrdersPageView';
 import Tickets from './Tickets';
+import wallet from './wallet/BillingPageView';
 
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
@@ -183,8 +184,12 @@ export default function DashboardPage({ user }: any) {
     {activeTab === 'tickets' && (
       <Tickets scrollContainerRef={mainRef} />
     )}
+
+    {activeTab === 'wallet' && (
+      <Tickets scrollContainerRef={mainRef} />
+    )}
     
-    {!['home', 'services', 'orders', 'tickets'].includes(activeTab) && (
+    {!['home', 'services', 'orders', 'tickets', 'wallet'].includes(activeTab) && (
       <div className="h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in bg-white dark:bg-white/5 rounded-[3.5rem] border border-slate-200 dark:border-white/5 p-12">
         <div className="w-24 h-24 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 border border-blue-500/20">
           <Activity size={40} className="animate-pulse" />
