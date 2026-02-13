@@ -418,8 +418,8 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                 </div>
                 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] mb-4 sm:mb-6 tracking-tighter">
-                  Scale Your Social <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Presence Instantly.</span>
+                  Sri Lanka #1<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Social Media Marketing Panel</span>
                 </h1>
                 
                 <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-lg mb-6 sm:mb-8 font-medium leading-relaxed">
