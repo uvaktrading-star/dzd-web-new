@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // <-- import Link
+import { Link } from 'react-router-dom';
 import {
   Headphones,
   MessageCircle,
@@ -16,9 +16,10 @@ import {
   BarChart,
 } from 'lucide-react';
 
-// Original categories (unchanged)
+// Help categories with slugs for linking
 const helpCategories = [
   {
+    slug: 'getting-started',
     title: 'Getting Started',
     description: 'New to our platform? Start here.',
     icon: <BookOpen size={22} />,
@@ -26,6 +27,7 @@ const helpCategories = [
     articles: 8,
   },
   {
+    slug: 'orders-delivery',
     title: 'Orders & Delivery',
     description: 'Track orders, delays, and statuses.',
     icon: <Clock size={22} />,
@@ -33,6 +35,7 @@ const helpCategories = [
     articles: 12,
   },
   {
+    slug: 'payments-billing',
     title: 'Payments & Billing',
     description: 'Invoices, refunds, and payment methods.',
     icon: <Mail size={22} />,
@@ -40,6 +43,7 @@ const helpCategories = [
     articles: 6,
   },
   {
+    slug: 'api-integrations',
     title: 'API & Integrations',
     description: 'Documentation and troubleshooting.',
     icon: <Headphones size={22} />,
@@ -47,6 +51,7 @@ const helpCategories = [
     articles: 15,
   },
   {
+    slug: 'account-security',
     title: 'Account Security',
     description: '2FA, passwords, and privacy.',
     icon: <AlertCircle size={22} />,
@@ -54,6 +59,7 @@ const helpCategories = [
     articles: 5,
   },
   {
+    slug: 'troubleshooting',
     title: 'Troubleshooting',
     description: 'Common issues and fixes.',
     icon: <ThumbsUp size={22} />,
@@ -93,7 +99,7 @@ const featuredHowTo = [
   },
 ];
 
-// Support channels (unchanged)
+// Live support options
 const supportChannels = [
   {
     name: 'Live Chat',
@@ -121,7 +127,7 @@ const supportChannels = [
 export default function SupportView({ user }: any) {
   return (
     <div className="animate-fade-in space-y-8">
-      {/* Header (unchanged) */}
+      {/* Header with search / CTA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -146,7 +152,7 @@ export default function SupportView({ user }: any) {
         </div>
       </div>
 
-      {/* Quick Stats (unchanged) */}
+      {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Avg. Response Time', value: '< 2h', icon: <Clock />, color: 'bg-blue-600', trend: 'Live' },
@@ -178,7 +184,7 @@ export default function SupportView({ user }: any) {
         ))}
       </div>
 
-      {/* Original Help Categories (unchanged) */}
+      {/* Help Categories Grid (now clickable) */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="bg-white dark:bg-[#0f172a]/40 p-8 rounded-[3rem] border border-slate-200 dark:border-white/5">
           <div className="flex justify-between items-center mb-8">
@@ -189,11 +195,13 @@ export default function SupportView({ user }: any) {
               View All Articles
             </button>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {helpCategories.map((cat, idx) => (
-              <div
-                key={idx}
-                className="group p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 hover:bg-white dark:hover:bg-blue-600/5 transition-all cursor-pointer"
+            {helpCategories.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/support/category/${cat.slug}`}
+                className="group p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 hover:bg-white dark:hover:bg-blue-600/5 transition-all cursor-pointer block"
               >
                 <div className="flex items-start gap-4">
                   <div
@@ -219,13 +227,13 @@ export default function SupportView({ user }: any) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* NEW: How to Use Section with featured articles */}
+      {/* How to Use Section with featured articles */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="bg-white dark:bg-[#0f172a]/40 p-8 rounded-[3rem] border border-slate-200 dark:border-white/5">
           <div className="flex justify-between items-center mb-8">
@@ -283,7 +291,7 @@ export default function SupportView({ user }: any) {
         </div>
       </div>
 
-      {/* Support Channels (unchanged) */}
+      {/* Support Channels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {supportChannels.map((channel, i) => (
           <div
@@ -311,7 +319,7 @@ export default function SupportView({ user }: any) {
         ))}
       </div>
 
-      {/* Footer CTA (unchanged) */}
+      {/* Footer CTA */}
       <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-8 rounded-[3rem] text-white">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
