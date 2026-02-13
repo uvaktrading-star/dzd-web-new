@@ -11,6 +11,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { fetchSmmApi } from './DashboardPage';
+import { useNavigate } from 'react-router-dom'; // 👈 Add this import
 
 // Helper to extract keywords from service names for badges
 const getStatusBadges = (name: string) => {
@@ -24,6 +25,7 @@ const getStatusBadges = (name: string) => {
 };
 
 export default function ServicesPageView({ scrollContainerRef }: any) {
+  const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -128,6 +130,21 @@ const scrollToTop = () => {
   setShowHeader(true);
   setLastScrollY(0);
 };
+
+    const handleAddToOrder = (service: any) => {
+    // Navigate to orders page with service data in state
+    navigate('/dashboard/orders', { 
+      state: { 
+        selectedService: {
+          id: service.service.toString(),
+          name: service.name,
+          rate: service.rate,
+          min: service.min,
+          max: service.max
+        }
+      }
+    });
+  };
 
   return (
     <div className="relative animate-fade-in pb-32">
@@ -301,11 +318,14 @@ const scrollToTop = () => {
                         {service.min.toLocaleString()} - {service.max.toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-8 py-6 text-center">
-                       <button className="bg-blue-600 text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-600/20">
-                         <PlusCircle size={18} />
-                       </button>
-                    </td>
+<td className="px-8 py-6 text-center">
+  <button 
+    onClick={() => handleAddToOrder(service)}
+    className="bg-blue-600 text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
+  >
+    <PlusCircle size={18} />
+  </button>
+</td>
                   </tr>
                 ))
               ) : (
@@ -331,9 +351,12 @@ const scrollToTop = () => {
                     </div>
                     <h4 className="font-black text-slate-900 dark:text-white text-sm leading-tight tracking-tight">{service.name}</h4>
                  </div>
-                 <button className="shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                   <PlusCircle size={20} />
-                 </button>
+<button 
+  onClick={() => handleAddToOrder(service)}
+  className="shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20"
+>
+  <PlusCircle size={20} />
+</button>
               </div>
               
               <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5">
