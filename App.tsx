@@ -16,6 +16,7 @@ import SupportView from './Support';
 import HowToUseView from './HowToUseView';
 import ArticleView from './ArticleView';
 import CategoryView from './CategoryView';
+import WalletPage from './wallet/BillingPageView';
 
 
 
@@ -113,6 +114,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route path="/support" element={<SupportPage />} />
+            <Route path="/wallet" element={<WalletPage />} />
             <Route path="*" element={<Navigate to="/" />} />
             <Route path="/support" element={<SupportView />} />
         <Route path="/support/how-to-use" element={<HowToUseView />} />
