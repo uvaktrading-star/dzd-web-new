@@ -12,8 +12,6 @@ import { useNavigate } from 'react-router-dom';
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
-  const navigate = useNavigate();
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,53 +26,22 @@ export default function BillingPageView({ user }: any) {
     show: false, msg: '', type: 'success'
   });
 
-  // --- 1. FIRST: Redirect logic useEffect ---
+  // Load cleared notifications from localStorage if user exists
   useEffect(() => {
-    // Check if user is authenticated
-    const isAuthenticated = user && user.uid;
-    
-    if (!isAuthenticated) {
-      navigate('/LoginPage');
-    } else {
-      // User is authenticated, proceed
-      setIsAuthChecked(true);
-    }
-  }, [user, navigate]);
-
-  // --- 2. SECOND: Load cleared notifications from localStorage ---
-  useEffect(() => {
-    if (user?.uid && isAuthChecked) {
+    if (user?.uid) {
       const saved = localStorage.getItem(`cleared_notifs_${user?.uid}`);
       if (saved) setClearedNotifications(JSON.parse(saved));
     }
-  }, [user, isAuthChecked]);
+  }, [user]);
 
-  // --- 3. THIRD: Fetch balance and history ---
+  // Fetch balance and history if user exists
   useEffect(() => {
-    if (user?.uid && isAuthChecked) {
+    if (user?.uid) {
       fetchBalance(user.uid);
       fetchHistory(user.uid);
     }
-  }, [user, isAuthChecked, clearedNotifications]);
+  }, [user, clearedNotifications]);
 
-  // --- 4. FOURTH: Loading check (AFTER all useEffects) ---
-  if (!isAuthChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fcfdfe] dark:bg-[#020617]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">
-            AUTHENTICATING...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // --- 5. FIFTH: User check ---
-  if (!user) return null;
-
-  // --- 6. THEN: All your functions ---
   const showNotification = (msg: string, type: 'success' | 'error') => {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
@@ -112,6 +79,7 @@ export default function BillingPageView({ user }: any) {
   };
 
   const clearAll = () => {
+    if (!user?.uid) return;
     const allIds = notifications.map(n => n.id || n.created_at);
     const newClearedList = [...clearedNotifications, ...allIds];
     setClearedNotifications(newClearedList);
@@ -147,7 +115,7 @@ export default function BillingPageView({ user }: any) {
   };
 
   return (
-    <div className="animate-fade-in space-y-8 pb-20 px-4 md:px-8 pt-24 md:pt-28 max-w-7xl mx-auto overflow-hidden relative min-h-screen">      
+    <div className="animate-fade-in space-y-8 pb-20 px-4 md:px-8 pt-24 md:pt-28 max-w-7xl mx-auto overflow-hidden relative min-h-screen">
       
       {/* --- TOAST --- */}
       {toast.show && (
