@@ -12,6 +12,12 @@ import DashboardPage from './DashboardPage';
 import OnboardingPage from './OnboardingPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
 import SupportPage from './Support';
+import SupportView from './Support';
+import HowToUseView from './HowToUseView';
+import ArticleView from './ArticleView';
+import CategoryView from './CategoryView';
+
+
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -108,6 +114,10 @@ export default function App() {
             <Route path="/forgot" element={<ForgotPasswordPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/support" element={<SupportView />} />
+        <Route path="/support/how-to-use" element={<HowToUseView />} />
+        <Route path="/support/article/:slug" element={<ArticleView />} />
+        <Route path="/support/category/:categorySlug" element={<CategoryView />} />
           </Routes>
         </main>
 
