@@ -17,15 +17,37 @@ import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
 
 // 👇 Add ScrollToTop component here
+// 👇 Update ScrollToTop component
 function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    // Scroll window to top
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: 'instant' // Use 'smooth' for animated scrolling
+      behavior: 'instant'
     });
+    
+    // Also scroll all possible scroll containers
+    setTimeout(() => {
+      // Try to find and scroll the main content container
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        mainContent.scrollTo({
+          top: 0,
+          behavior: 'instant'
+        });
+      }
+      
+      // Scroll any element with overflow-y auto
+      document.querySelectorAll('.overflow-y-auto, .no-scrollbar').forEach(el => {
+        el.scrollTo({
+          top: 0,
+          behavior: 'instant'
+        });
+      });
+    }, 50);
   }, [pathname]);
 
   return null;
