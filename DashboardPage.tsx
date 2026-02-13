@@ -180,8 +180,8 @@ export default function DashboardPage({ user }: any) {
       <Tickets scrollContainerRef={mainRef} />
     )}
 
-    {activeTab === 'tickets' && (
-      <Tickets scrollContainerRef={mainRef} />
+    {activeTab === 'wallet' && (
+      <Wallet scrollContainerRef={mainRef} />
     )}
     
     {!['home', 'services', 'orders', 'tickets', 'wallet'].includes(activeTab) && (
