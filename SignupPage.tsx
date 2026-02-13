@@ -24,7 +24,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
 
-// Custom Toast Component
+// Custom Toast Component with fixed mobile alignment
 const Toast = ({ message, type, onClose }: { 
   message: string; 
   type: 'success' | 'error' | 'info';
@@ -54,7 +54,7 @@ const Toast = ({ message, type, onClose }: {
   };
 
   return (
-    <div className={`fixed top-6 right-6 z-[9999] max-w-sm w-full ${bgColors[type]} border rounded-xl shadow-lg animate-slide-in`}>
+    <div className={`fixed left-1/2 -translate-x-1/2 top-6 z-[9999] w-[calc(100%-32px)] sm:left-auto sm:right-6 sm:translate-x-0 sm:w-full max-w-sm ${bgColors[type]} border rounded-xl shadow-lg animate-slide-in`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
