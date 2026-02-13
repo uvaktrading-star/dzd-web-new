@@ -25,11 +25,6 @@ import Wallet from './wallet/BillingPageView';
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
 
-/**
- * PRIVATE PROXY FETCHER
- * This uses the /api/proxy serverless function to bypass CORS.
- * Ensure you deploy the api/proxy.ts file to your Vercel project.
- */
 export const fetchSmmApi = async (params: Record<string, string>) => {
   // Use a relative path if the proxy is co-located in the same project
   // Or replace with your full vercel URL: e.g., https://your-app.vercel.app/api/proxy
