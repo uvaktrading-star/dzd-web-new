@@ -275,7 +275,7 @@ export default function LoginPage({ onLogin, onClose, onSwitchToSignup }: { onLo
                   onClick={onSwitchToSignup}
                   className="text-blue-500 font-black hover:text-blue-400 hover:underline underline-offset-4 transition-colors"
                 >
-                Create an account
+                CREATE AN ACCOUNT
                 </button>
               </p>
             </div>
