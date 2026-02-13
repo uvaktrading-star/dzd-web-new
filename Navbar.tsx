@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, 
   Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, 
-  BarChart3, Wallet, Activity, Ticket, Info, FileText, Mail
+  BarChart3, Wallet, Activity, Ticket, Info, FileText, Mail, List
 } from 'lucide-react';
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
