@@ -20,7 +20,7 @@ import DashboardHomeView from './DashboardHomeView';
 import ServicesPageView from './ServicesPageView';
 import OrdersPageView from './OrdersPageView';
 import Tickets from './Tickets';
-import wallet from './wallet/BillingPageView';
+import Wallet from './wallet/BillingPageView';
 
 const API_KEY = "ddaac158a07c133069b875419234d8e3";
 const BASE_URL = "https://makemetrend.online/api/v2";
@@ -186,7 +186,7 @@ export default function DashboardPage({ user }: any) {
     )}
 
     {activeTab === 'wallet' && (
-      <Tickets scrollContainerRef={mainRef} />
+      <Wallet scrollContainerRef={mainRef} />
     )}
     
     {!['home', 'services', 'orders', 'tickets', 'wallet'].includes(activeTab) && (
