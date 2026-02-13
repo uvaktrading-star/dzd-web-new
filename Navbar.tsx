@@ -187,7 +187,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                     <Zap size={16} fill="white" />
                   </div>
-                  <span className="text-base font-black text-slate-900 dark:text-white uppercase">DZD</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white uppercase">DZD Marketing </span>
                 </div>
                 <button 
                   onClick={closeMobileMenu}
@@ -323,7 +323,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                   {/* Footer - Left aligned */}
                   <div className="flex items-center gap-3 pt-2 text-[8px] font-medium text-slate-400 border-t border-slate-100 dark:border-white/5">
                     <span className="uppercase tracking-wider">v2.0.0</span>
-                    <span>© 2024 DZD</span>
+                    <span>© 2026 DZD</span>
                   </div>
                 </div>
               ) : (
