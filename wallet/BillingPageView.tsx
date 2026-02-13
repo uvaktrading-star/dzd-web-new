@@ -11,13 +11,6 @@ const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function BillingPageView({ user }: any) {
   const navigate = useNavigate();
-  
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
 
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
