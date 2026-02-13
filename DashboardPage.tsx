@@ -242,13 +242,6 @@ export default function DashboardPage({ user }: any) {
             </button>
           );
         })}
-
-        <button className="flex flex-col items-center justify-center flex-1 h-full text-slate-500">
-          <Menu size={20} />
-          <span className="text-[10px] mt-1 font-semibold tracking-wide">
-            Menu
-          </span>
-        </button>
       </nav>
     </div>
   );
