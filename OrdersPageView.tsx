@@ -112,6 +112,7 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   const [orderError, setOrderError] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+  const [navigationLoading, setNavigationLoading] = useState(false); 
 
   const PAGE_SIZE = 30;
 
@@ -122,7 +123,10 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
 useEffect(() => {
   const state = location.state as any;
   if (state?.selectedService) {
-    // Switch to new order tab FIRST
+    // Show loading state
+    setNavigationLoading(true);
+    
+    // Switch to new order tab
     setActiveView('new');
     
     const { id, name, rate, min, max } = state.selectedService;
@@ -130,16 +134,23 @@ useEffect(() => {
     // Set the selected service
     setSelectedService(name);
     setSelectedServiceId(id);
-    setServiceDetails({
-      service: parseInt(id),
-      name: name,
-      rate: rate,
-      min: min,
-      max: max
-    });
     
-    // Auto-set quantity to minimum
-    setQuantity(min.toString());
+    // Simulate a small delay to show loading (remove in production if not needed)
+    setTimeout(() => {
+      setServiceDetails({
+        service: parseInt(id),
+        name: name,
+        rate: rate,
+        min: min,
+        max: max
+      });
+      
+      // Auto-set quantity to minimum
+      setQuantity(min.toString());
+      
+      // Hide loading state
+      setNavigationLoading(false);
+    }, 500); // Small delay to show loading state
     
     // Clear the state so it doesn't persist on refresh
     navigate(location.pathname, { replace: true, state: {} });
@@ -1159,95 +1170,106 @@ useEffect(() => {
               </div>
 
               <form onSubmit={placeOrder} className="p-6 md:p-8 space-y-6">
-                {/* Service Selection */}
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <Hash size={12} />
-                    Select Service <span className="text-red-500">*</span>
-                  </label>
-                  
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-                      className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left flex justify-between items-center hover:border-blue-500 transition-all"
-                    >
-                      <div>
-                        {serviceDetails ? (
-                          <div>
-                            <p className="font-black text-slate-900 dark:text-white text-sm">
-                              {serviceDetails.name}
-                            </p>
-                            <p className="text-[8px] font-bold text-slate-500 mt-0.5">
-                              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: ${serviceDetails.rate}/1k
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-slate-400">Choose a service to deploy</p>
-                        )}
-                      </div>
-                      <ChevronUp size={16} className={`transform transition-transform ${showServiceDropdown ? 'rotate-180' : ''}`} />
-                    </button>
+{/* Service Selection */}
+<div className="space-y-2">
+  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+    <Hash size={12} />
+    Select Service <span className="text-red-500">*</span>
+  </label>
+  
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+      disabled={navigationLoading}
+      className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left flex justify-between items-center hover:border-blue-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+    >
+      <div>
+        {navigationLoading ? (
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div>
+              <p className="text-sm font-medium text-slate-400">Loading service details...</p>
+              <p className="text-[8px] font-bold text-blue-500/70 mt-0.5">Preparing order form</p>
+            </div>
+          </div>
+        ) : serviceDetails ? (
+          <div>
+            <p className="font-black text-slate-900 dark:text-white text-sm">
+              {serviceDetails.name}
+            </p>
+            <p className="text-[8px] font-bold text-slate-500 mt-0.5">
+              ID: {serviceDetails.service} | Min: {serviceDetails.min?.toLocaleString()} | Max: {serviceDetails.max?.toLocaleString()} | Rate: ${serviceDetails.rate}/1k
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">Choose a service to deploy</p>
+        )}
+      </div>
+      {!navigationLoading && (
+        <ChevronUp size={16} className={`transform transition-transform ${showServiceDropdown ? 'rotate-180' : ''}`} />
+      )}
+    </button>
 
-                    {showServiceDropdown && (
-                      <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
-                        <div className="mb-3">
-                          <div className="relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                              type="text"
-                              placeholder="Search services..."
-                              value={serviceSearch}
-                              onChange={(e) => setServiceSearch(e.target.value)}
-                              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
-                              autoFocus
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          {loadingServices ? (
-                            <div className="py-8 text-center">
-                              <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
-                              <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
-                            </div>
-                          ) : filteredServices.length > 0 ? (
-                            filteredServices.map(service => (
-                              <button
-                                key={service.service}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedService(service.name);
-                                  setSelectedServiceId(service.service.toString());
-                                  setServiceSearch('');
-                                  setShowServiceDropdown(false);
-                                }}
-                                className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
-                              >
-                                <p className="font-bold text-slate-900 dark:text-white text-xs">
-                                  {service.name}
-                                </p>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                    ID: {service.service}
-                                  </span>
-                                  <span className="text-[8px] font-bold text-slate-500">
-                                    ${service.rate}/1k
-                                  </span>
-                                  <span className="text-[8px] font-bold text-slate-500">
-                                    {service.min}-{service.max}
-                                  </span>
-                                </div>
-                              </button>
-                            ))
-                          ) : (
-                            <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+    {showServiceDropdown && !navigationLoading && (
+      <div className="absolute z-50 mt-2 w-full bg-white dark:bg-[#020617] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 max-h-96 overflow-y-auto">
+        <div className="mb-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={serviceSearch}
+              onChange={(e) => setServiceSearch(e.target.value)}
+              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2.5 pl-9 pr-4 text-xs focus:border-blue-600 outline-none"
+              autoFocus
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-1">
+          {loadingServices ? (
+            <div className="py-8 text-center">
+              <Loader2 size={20} className="mx-auto animate-spin text-blue-600" />
+              <p className="text-[9px] font-black uppercase text-slate-400 mt-2">Loading services...</p>
+            </div>
+          ) : filteredServices.length > 0 ? (
+            filteredServices.map(service => (
+              <button
+                key={service.service}
+                type="button"
+                onClick={() => {
+                  setSelectedService(service.name);
+                  setSelectedServiceId(service.service.toString());
+                  setServiceSearch('');
+                  setShowServiceDropdown(false);
+                }}
+                className="w-full text-left px-3 py-3 rounded-lg hover:bg-blue-600/10 transition-all"
+              >
+                <p className="font-bold text-slate-900 dark:text-white text-xs">
+                  {service.name}
+                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                    ID: {service.service}
+                  </span>
+                  <span className="text-[8px] font-bold text-slate-500">
+                    ${service.rate}/1k
+                  </span>
+                  <span className="text-[8px] font-bold text-slate-500">
+                    {service.min}-{service.max}
+                  </span>
                 </div>
+              </button>
+            ))
+          ) : (
+            <p className="py-4 text-center text-[10px] text-slate-500">No services found</p>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
                 {/* Link/Username Input */}
                 <div className="space-y-2">
