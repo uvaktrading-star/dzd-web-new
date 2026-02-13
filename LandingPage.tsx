@@ -917,7 +917,7 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
           {/* Bottom Bar */}
           <div className="pt-6 lg:pt-8 mt-6 lg:mt-8 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 order-2 md:order-1">
-              © 2024 DzD Marketing. All rights reserved. | Designed for scale
+              © 2026 DzD Marketing. All rights reserved. | Designed for scale
             </p>
             <div className="flex items-center gap-4 order-1 md:order-2">
               <span className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-wider">v2.0.0</span>
