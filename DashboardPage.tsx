@@ -216,7 +216,7 @@ export default function DashboardPage({ user }: any) {
 
       {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-2 z-50">
-        {menuItems.slice(0, 4).map(item => {
+        {menuItems.slice(0, 5).map(item => {
           const isActive = activeTab === item.id;
 
           return (
