@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Zap, ChevronDown, LayoutGrid, User, Settings, LogOut, Menu, X, 
   Moon, Sun, CreditCard, Home, ShoppingCart, History, HelpCircle, 
-  BarChart3, Wallet, Activity 
+  BarChart3, Wallet, Activity, Ticket, Info, FileText, Mail
 } from 'lucide-react';
 
 export const ThemeToggle = ({ theme, toggleTheme }: { theme: string, toggleTheme: () => void }) => {
@@ -85,7 +85,9 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8 font-bold uppercase tracking-widest text-[10px]">
               <Link to="/" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Home</Link>
-              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Services</a>
+              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">About Us</a>
+              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
+              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Contact Us</a>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Support</a>
             </div>
 
@@ -114,18 +116,21 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                         <p className="text-[10px] font-bold text-blue-600 mt-1">Verified User</p>
                       </div>
                       <div className="py-1">
-                        <Link to="/dashboard" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                        <Link to="/dashboard/home" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
                           <LayoutGrid size={16} /> Dashboard
                         </Link>
-                        <Link to="/orders" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
-                          <ShoppingCart size={16} /> Orders
+                        <Link to="/dashboard/services" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                          <List size={16} /> Services
                         </Link>
-                        <button className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 w-full text-left">
-                          <User size={16} /> Profile
-                        </button>
-                        <button className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 w-full text-left">
-                          <Settings size={16} /> Settings
-                        </button>
+                        <Link to="/dashboard/orders" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                          <History size={16} /> Orders
+                        </Link>
+                        <Link to="/dashboard/wallet" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                          <Wallet size={16} /> Wallet
+                        </Link>
+                         <Link to="/dashboard/tickets" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
+                          <Ticket size={16} /> Tickets
+                        </Link>
                       </div>
                       <div className="border-t border-slate-100 dark:border-white/5 mt-1 pt-1">
                         <button onClick={handleSignOut} className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 w-full text-left">
@@ -198,23 +203,33 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               {/* GENERAL LINKS - Always visible */}
               <div className="mb-6">
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">General</p>
-                <div className="space-y-0.5">
-                  <NavItem 
-                    icon={<Home size={16} />} 
-                    label="Home" 
-                    onClick={() => handleNavigation('/')} 
-                  />
-                  <NavItem 
-                    icon={<ShoppingCart size={16} />} 
-                    label="Services" 
-                    onClick={() => {}} 
-                  />
-                  <NavItem 
-                    icon={<HelpCircle size={16} />} 
-                    label="Support" 
-                    onClick={() => {}} 
-                  />
-                </div>
+<div className="space-y-0.5">
+  <NavItem 
+    icon={<Home size={16} />} 
+    label="Home" 
+    onClick={() => handleNavigation('/')} 
+  />
+  <NavItem 
+    icon={<Info size={16} />} 
+    label="About Us" 
+    onClick={() => handleNavigation('/about')} 
+  />
+  <NavItem 
+    icon={<FileText size={16} />} 
+    label="Terms of Service" 
+    onClick={() => handleNavigation('/terms')} 
+  />
+  <NavItem 
+    icon={<Mail size={16} />} 
+    label="Contact Us" 
+    onClick={() => handleNavigation('/contact')} 
+  />
+  <NavItem 
+    icon={<HelpCircle size={16} />} 
+    label="Support" 
+    onClick={() => handleNavigation('/support')} 
+  />
+</div>
               </div>
               
               {/* DASHBOARD LINKS - Only when logged in */}
@@ -225,32 +240,27 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                     <NavItem 
                       icon={<LayoutGrid size={16} />} 
                       label="Dashboard" 
-                      onClick={() => handleNavigation('/dashboard')} 
+                      onClick={() => handleNavigation('/dashboard/home')} 
                     />
                     <NavItem 
-                      icon={<ShoppingCart size={16} />} 
-                      label="My Orders" 
-                      onClick={() => handleNavigation('/orders')} 
+                      icon={<List size={16} />} 
+                      label="Services" 
+                      onClick={() => handleNavigation('/dashboard/services')} 
                     />
                     <NavItem 
                       icon={<History size={16} />} 
-                      label="Order History" 
-                      onClick={() => handleNavigation('/orders')} 
+                      label="Orders" 
+                      onClick={() => handleNavigation('/dashboard/orders')} 
                     />
                     <NavItem 
-                      icon={<BarChart3 size={16} />} 
-                      label="Analytics" 
-                      onClick={() => handleNavigation('/analytics')} 
+                      icon={<Wallet size={16} />} 
+                      label="Wallet" 
+                      onClick={() => handleNavigation('/dashboard/wallet')} 
                     />
                     <NavItem 
-                      icon={<CreditCard size={16} />} 
-                      label="Billing" 
-                      onClick={() => {}} 
-                    />
-                    <NavItem 
-                      icon={<Settings size={16} />} 
-                      label="Settings" 
-                      onClick={() => {}} 
+                      icon={<Ticket size={16} />} 
+                      label="Tickets" 
+                      onClick={() => handleNavigation('/dashboard/tickets')} 
                     />
                   </div>
                 </div>
@@ -335,7 +345,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                   {/* Footer for non-logged in users */}
                   <div className="flex items-center gap-3 mt-4 pt-2 text-[8px] font-medium text-slate-400 border-t border-slate-100 dark:border-white/5">
                     <span className="uppercase tracking-wider">v2.0.0</span>
-                    <span>© 2024 DZD</span>
+                    <span>© 2026 DZD</span>
                   </div>
                 </div>
               )}
