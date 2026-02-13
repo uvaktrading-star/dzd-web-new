@@ -54,16 +54,19 @@ const Toast = ({ message, type, onClose }: {
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-[300] max-w-sm w-full ${bgColors[type]} border rounded-xl shadow-lg animate-slide-in`}>
+    <div className={`fixed top-6 right-6 z-[9999] max-w-sm w-full ${bgColors[type]} border rounded-xl shadow-lg animate-slide-in`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 mt-0.5">
             {icons[type]}
           </div>
-          <div className="flex-1">
-            <p className={`text-sm font-bold ${textColors[type]}`}>{message}</p>
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-bold ${textColors[type]} break-words`}>{message}</p>
           </div>
-          <button onClick={onClose} className={`flex-shrink-0 ${textColors[type]} hover:opacity-70`}>
+          <button 
+            onClick={onClose} 
+            className={`flex-shrink-0 ml-2 ${textColors[type]} hover:opacity-70 transition-opacity`}
+          >
             <X size={16} />
           </button>
         </div>
@@ -520,6 +523,7 @@ export default function SignupPage({
         )}
       </div>
 
+      {/* Add animation styles */}
       {/* Add animation styles */}
       <style>{`
         @keyframes slide-in {
