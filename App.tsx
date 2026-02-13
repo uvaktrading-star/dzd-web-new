@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -11,14 +10,11 @@ import SignupPage from './SignupPage';
 import DashboardPage from './DashboardPage';
 import OnboardingPage from './OnboardingPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
-import SupportPage from './Support';
 import SupportView from './Support';
 import HowToUseView from './HowToUseView';
 import ArticleView from './ArticleView';
 import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
-
-
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -96,7 +92,7 @@ export default function App() {
   }
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <div className={`min-h-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-dark' : 'bg-slate-50'}`}>
         <Navbar 
           theme={theme} 
@@ -113,13 +109,12 @@ export default function App() {
             <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/forgot" element={<ForgotPasswordPage />} />
-            <Route path="/support" element={<SupportPage />} />
+            <Route path="/support" element={<SupportView />} />
+            <Route path="/support/how-to-use" element={<HowToUseView />} />
+            <Route path="/support/article/:slug" element={<ArticleView />} />
+            <Route path="/support/category/:categorySlug" element={<CategoryView />} />
             <Route path="/wallet" element={<WalletPage user={user} />} />
             <Route path="*" element={<Navigate to="/" />} />
-            <Route path="/support" element={<SupportView />} />
-        <Route path="/support/how-to-use" element={<HowToUseView />} />
-        <Route path="/support/article/:slug" element={<ArticleView />} />
-        <Route path="/support/category/:categorySlug" element={<CategoryView />} />
           </Routes>
         </main>
 
@@ -139,6 +134,6 @@ export default function App() {
           />
         )}
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
