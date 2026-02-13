@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlusCircle, Wallet, PieChart, CreditCard, Mail, Zap, TrendingUp } from 'lucide-react';
+import { PlusCircle, Wallet, PieChart, CreditCard, Mail, Zap, TrendingUp, History, ListOrderedIcon } from 'lucide-react';
 
 export default function DashboardHomeView({ user, balance }: any) {
   return (
@@ -18,8 +18,8 @@ export default function DashboardHomeView({ user, balance }: any) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Available Balance', value: `$${balance || '0.00'}`, icon: <Wallet />, color: 'bg-blue-600', trend: 'Live Sync' },
-          { label: 'Active Tasks', value: '12', icon: <PieChart />, color: 'bg-pink-600', trend: '+4 New' },
-          { label: 'Total Volume', value: '$1,890', icon: <CreditCard />, color: 'bg-green-600', trend: 'Verified' },
+          { label: 'Order History', value: '12', icon: <History />, color: 'bg-pink-600', trend: '+4 New' },
+          { label: 'Active Orders', value: '3', icon: <ListOrderedIcon />, color: 'bg-green-600', trend: 'Verified' },
           { label: 'System Tickets', value: '0', icon: <Mail />, color: 'bg-orange-600', trend: 'Clear' }
         ].map((stat, i) => (
           <div key={i} className="bg-white dark:bg-[#0f172a]/40 p-6 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm hover:border-blue-500/30 transition-colors">
@@ -35,7 +35,7 @@ export default function DashboardHomeView({ user, balance }: any) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="lg:col-span-2 bg-white dark:bg-[#0f172a]/40 p-8 rounded-[3rem] border border-slate-200 dark:border-white/5">
           <div className="flex justify-between items-center mb-8">
              <h3 className="text-xl font-black tracking-tight uppercase tracking-widest text-xs text-slate-400">Execution History</h3>
@@ -64,27 +64,7 @@ export default function DashboardHomeView({ user, balance }: any) {
           </div>
         </div>
         
-        <div className="bg-white dark:bg-[#0f172a]/40 p-8 rounded-[3rem] border border-slate-200 dark:border-white/5 flex flex-col">
-          <h3 className="text-xl font-black mb-8 tracking-tight uppercase tracking-widest text-xs text-slate-400">Quick Deploy</h3>
-          <div className="space-y-5 flex-1">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Protocol Type</label>
-              <select className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl py-4 px-4 text-sm font-bold focus:border-blue-500 outline-none text-slate-900 dark:text-white">
-                <option>TikTok Real Engagement</option>
-                <option>Instagram Verified Look</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Target Path (URL)</label>
-              <input className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl py-4 px-4 text-sm font-bold focus:border-blue-500 outline-none text-slate-900 dark:text-white" placeholder="https://..." />
-            </div>
-            <div className="mt-auto">
-              <button className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                 Activate <TrendingUp size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );
