@@ -388,6 +388,14 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
     }
   };
 
+    const handleSupportPage = () => {
+    if (user) {
+      navigate('/support'); // Replace with your services route
+    } else {
+      onSignupClick?.();
+    }
+  };
+
   return (
     <div className="bg-slate-50 dark:bg-[#020617] min-h-screen selection:bg-blue-600/30">
       {/* ========== HERO SECTION - MOBILE OPTIMIZED ========== */}
@@ -426,7 +434,9 @@ export default function LandingPage({ onSignupClick }: { onSignupClick?: () => v
                   >
                     View Services <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                  <button
+                    onClick={handleSupportPage}
+                    className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                     <HeadphonesIcon size={14} className="sm:w-4 sm:h-4" /> 24/7 Support
                   </button>
                 </div>
