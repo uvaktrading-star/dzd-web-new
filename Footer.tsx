@@ -22,7 +22,7 @@ export default function Footer() {
           <div><h4 className="font-black mb-6 uppercase text-xs tracking-widest text-slate-400">Support</h4><ul className="space-y-4 text-slate-500 font-bold"><li>Help Center</li><li>Tickets</li><li>FAQ</li></ul></div>
           <div><h4 className="font-black mb-6 uppercase text-xs tracking-widest text-slate-400">Newsletter</h4><div className="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-white/5"><input className="bg-transparent px-4 py-2 outline-none w-full text-sm" placeholder="Email" /><button className="bg-blue-600 p-2 rounded-lg text-white"><Send size={18} /></button></div></div>
         </div>
-        <div className="pt-10 border-t border-slate-200 dark:border-white/5 text-center text-slate-400 text-xs font-black uppercase">© 2024 DzD Marketing. Global Scale Solutions.</div>
+        <div className="pt-10 border-t border-slate-200 dark:border-white/5 text-center text-slate-400 text-xs font-black uppercase">© 2026 DzD Marketing. Global Scale Solutions.</div>
       </div>
     </footer>
   );
