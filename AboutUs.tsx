@@ -61,31 +61,69 @@ const LinkedinIcon = (props: any) => (
 // Team Member Card Component
 const TeamMember = ({ name, role, image, social }: { name: string; role: string; image: string; social?: any }) => (
   <div className="group relative">
-    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-    <div className="relative bg-white dark:bg-[#0f172a] p-6 rounded-2xl border border-slate-200 dark:border-white/5 text-center group-hover:-translate-y-2 transition-all duration-300">
-      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 p-1">
-        <div className="w-full h-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-          <img src={image} alt={name} className="w-full h-full object-cover" />
+    {/* Glow effect on hover */}
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl"></div>
+    
+    {/* Main card */}
+    <div className="relative bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden group-hover:border-blue-500/50 transition-all duration-300 shadow-lg hover:shadow-xl">
+      
+      {/* Colored top bar */}
+      <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+      
+      <div className="p-6 text-center">
+        {/* Avatar with ring */}
+        <div className="relative mb-4 inline-block">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+          <div className="relative w-24 h-24 mx-auto rounded-full border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden">
+            <img src={image} alt={name} className="w-full h-full object-cover" />
+          </div>
+          {/* Online status indicator (optional) */}
+          <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
         </div>
-      </div>
-      <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">{name}</h3>
-      <p className="text-sm text-blue-600 dark:text-blue-400 font-bold mb-3">{role}</p>
-      <div className="flex items-center justify-center gap-2">
-        {social?.twitter && (
-          <a href={social.twitter} className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-blue-600 hover:text-white transition-all">
-            <TwitterIcon size={14} />
+        
+        {/* Name and role */}
+        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">{name}</h3>
+        <p className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-3 py-1 rounded-full inline-block mb-4">
+          {role}
+        </p>
+        
+        {/* Social links - redesigned */}
+        <div className="flex items-center justify-center gap-3 pt-2 border-t border-slate-100 dark:border-white/5">
+          {social?.linkedin && (
+            <a 
+              href={social.linkedin} 
+              className="w-9 h-9 rounded-xl bg-[#0077b5]/10 flex items-center justify-center text-[#0077b5] hover:bg-[#0077b5] hover:text-white transition-all group/btn"
+              title="LinkedIn"
+            >
+              <LinkedinIcon size={16} />
+            </a>
+          )}
+          {social?.twitter && (
+            <a 
+              href={social.twitter} 
+              className="w-9 h-9 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center text-[#1DA1F2] hover:bg-[#1DA1F2] hover:text-white transition-all group/btn"
+              title="Twitter"
+            >
+              <TwitterIcon size={16} />
+            </a>
+          )}
+          {social?.instagram && (
+            <a 
+              href={social.instagram} 
+              className="w-9 h-9 rounded-xl bg-[#E4405F]/10 flex items-center justify-center text-[#E4405F] hover:bg-gradient-to-r hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#FCAF45] hover:text-white transition-all group/btn"
+              title="Instagram"
+            >
+              <InstagramIcon size={16} />
+            </a>
+          )}
+          <a 
+            href={`mailto:${name.toLowerCase().replace(' ', '.')}@dzdmarketing.com`} 
+            className="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all group/btn"
+            title="Email"
+          >
+            <Mail size={16} />
           </a>
-        )}
-        {social?.linkedin && (
-          <a href={social.linkedin} className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-blue-600 hover:text-white transition-all">
-            <LinkedinIcon size={14} />
-          </a>
-        )}
-        {social?.instagram && (
-          <a href={social.instagram} className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-blue-600 hover:text-white transition-all">
-            <InstagramIcon size={14} />
-          </a>
-        )}
+        </div>
       </div>
     </div>
   </div>
@@ -404,33 +442,51 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-16 lg:py-24">
+      <section className="py-16 lg:py-24 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-[#0a0f1c]/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter">
+            <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-full mb-4">
+              <Users size={14} className="text-blue-600 dark:text-blue-400" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                THE TEAM
+              </span>
+            </div>
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter">
               Meet the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Core Team</span>
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg">
+            <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg max-w-xl mx-auto">
               Three dedicated professionals working hard to make DzD Marketing the best SMM panel.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10 max-w-5xl mx-auto">
             {team.map((member, index) => (
               <TeamMember key={index} {...member} />
             ))}
           </div>
 
-          {/* Team Message */}
-          <div className="mt-12 text-center max-w-2xl mx-auto">
-            <div className="bg-blue-50 dark:bg-blue-950/30 p-6 rounded-2xl border border-blue-100 dark:border-blue-900/50">
-              <Heart size={24} className="text-blue-600 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-300 text-sm italic">
+          {/* Team Message - Redesigned */}
+          <div className="mt-16 text-center max-w-3xl mx-auto relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 rounded-3xl blur-3xl"></div>
+            <div className="relative bg-white dark:bg-[#0f172a] p-8 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                Founder's Note
+              </div>
+              <Heart size={32} className="text-blue-600 mx-auto mb-4" fill="currentColor" fillOpacity={0.2} />
+              <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-300 italic mb-4 font-medium">
                 "We're not just a team, we're a family. Every customer who trusts us becomes part of our story."
               </p>
-              <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider mt-3">
-                — Danuka, Founder
-              </p>
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 p-0.5">
+                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 overflow-hidden">
+                    <img src="https://i.pravatar.cc/150?img=8" alt="Danuka" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">Danuka Dissanayake</p>
+                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Founder & CEO</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
