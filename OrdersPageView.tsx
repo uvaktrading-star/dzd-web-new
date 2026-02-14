@@ -190,7 +190,6 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
       const data = await response.json();
-      console.log("🔍 RAW BALANCE DATA FROM WORKER:", data);
       setUserBalance({
         total_balance: parseFloat(data.total_balance || 0).toFixed(2),
         pending_balance: parseFloat(data.pending_balance || 0).toFixed(2)
@@ -362,15 +361,6 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
       );
       
       const balance = parseFloat(userBalance.total_balance);
-          console.log("🔍 BALANCE CHECK:", {
-      serviceName: serviceDetails.name,
-      quantity: quantity,
-      totalPriceLKR: totalPrice.lkr,
-      balanceFromState: userBalance.total_balance,
-      balanceAsNumber: balance,
-      isInsufficient: totalPrice.lkr > balance,
-      comparison: `${totalPrice.lkr} > ${balance} = ${totalPrice.lkr > balance}`
-    });
       setInsufficientBalance(totalPrice.lkr > balance);
     }
   }, [serviceDetails, quantity, userBalance, usdRate, currentUser]);
@@ -528,10 +518,9 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     };
   }, [filteredOrders, usdRate]);
 
-  // ============================================
-  // PLACE ORDER - WITH WALLET DEDUCTION
-  // ============================================
-
+// ============================================
+// PLACE ORDER - WITH WALLET DEDUCTION
+// ============================================
 const placeOrder = async (e: React.FormEvent) => {
   e.preventDefault();
   
@@ -554,13 +543,6 @@ const placeOrder = async (e: React.FormEvent) => {
 
   // Check if user has sufficient balance
   if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
-      console.log("🔴 INSUFFICIENT BALANCE ERROR:", {
-    needed: priceWithProfit.lkr,
-    available: userBalance.total_balance,
-    neededType: typeof priceWithProfit.lkr,
-    availableType: typeof parseFloat(userBalance.total_balance),
-    comparison: `${priceWithProfit.lkr} > ${parseFloat(userBalance.total_balance)}`
-  });
     setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
     return;
   }
@@ -1512,7 +1494,8 @@ const placeOrder = async (e: React.FormEvent) => {
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 font-bold text-sm focus:border-blue-600 outline-none transition-all"
                     required
                   />
-                  {/* Price Display - Final Price Only */}
+                  
+{/* Price Display - Final Price Only */}
 {serviceDetails && quantity && (
   <div className="mt-2 p-3 bg-blue-600/5 rounded-xl border border-blue-600/20">
     <div className="flex justify-between items-center">
@@ -1533,9 +1516,11 @@ const placeOrder = async (e: React.FormEvent) => {
           ).usd.toFixed(2)} USD
         </p>
       </div>
+      </div>
     </div>
-  </div>
+    
 )}
+                  </div>
 
                 {/* Optional Fields - Custom Comments */}
                 <div className="space-y-2">
