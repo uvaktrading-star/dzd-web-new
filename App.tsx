@@ -17,7 +17,7 @@ import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
 import ContactPage from './Contact';
 
-// 👇 Add ScrollToTop component here
+// 👇 Add ScrollToTop component here ,,
 // 👇 Update ScrollToTop component
 function ScrollToTop() {
   const { pathname } = useLocation();
