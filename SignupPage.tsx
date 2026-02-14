@@ -246,11 +246,11 @@ export default function SignupPage({
         />
       )}
 
-      <div className="fixed inset-0 z-[150] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-hidden">
-        {/* Background Overlay Click to Close */}
-        <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
+<div className="fixed inset-0 z-[150] flex items-start lg:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+  {/* Background Overlay Click to Close */}
+  <div className="fixed inset-0 cursor-pointer" onClick={onClose} />
 
-        <div className="relative w-full h-full sm:h-auto sm:max-w-5xl bg-white sm:rounded-[2.5rem] shadow-2xl overflow-y-auto sm:overflow-hidden animate-scale-in">
+  <div className="relative w-full sm:w-auto sm:max-w-5xl bg-white sm:rounded-[2.5rem] shadow-2xl overflow-y-auto sm:overflow-hidden animate-scale-in my-0 sm:my-8">
           {/* Desktop Close Button */}
           <button 
             onClick={onClose} 
@@ -297,26 +297,26 @@ export default function SignupPage({
             </div>
 
             {/* Form Side */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-8 lg:p-16 min-h-screen sm:min-h-0">
-              <div className="w-full max-w-md mx-auto">
-                {/* Mobile Header Branding */}
-                <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
-                    <Zap size={20} fill="white" />
-                  </div>
-                  <span className="text-lg font-bold text-slate-900 uppercase tracking-tight">
-                    DzD <span className="text-blue-600">Marketing</span>
-                  </span>
-                </div>
-                
-                <div className="mb-8 text-center lg:text-left">
-                  <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2 tracking-tighter">
-                    Create Account
-                  </h2>
-                  <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em]">
-                    Join the elite marketing ecosystem
-                  </p>
-                </div>
+<div className="w-full lg:w-7/12 flex items-start lg:items-center justify-center p-6 sm:p-8 lg:p-16 min-h-screen lg:min-h-0 overflow-y-auto">
+  <div className="w-full max-w-md mx-auto py-8 lg:py-0">
+    {/* Mobile Header Branding */}
+    <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
+      <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
+        <Zap size={20} fill="white" />
+      </div>
+      <span className="text-lg font-bold text-slate-900 uppercase tracking-tight">
+        DzD <span className="text-blue-600">Marketing</span>
+      </span>
+    </div>
+    
+    <div className="mb-8 text-center lg:text-left">
+      <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2 tracking-tighter">
+        Create Account
+      </h2>
+      <p className="text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em]">
+        Join the elite marketing ecosystem
+      </p>
+    </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
