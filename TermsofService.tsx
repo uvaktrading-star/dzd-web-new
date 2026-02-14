@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Shield, 
   FileText, 
@@ -18,9 +19,12 @@ import {
   Phone,
   MapPin,
   ShieldCheck,
-  DollarSign
+  DollarSign,
+  HeadphonesIcon,
+  ChevronRight
 } from 'lucide-react';
-import Navbar from './Navbar'; // Adjust the import path as needed
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // Social Icons (simplified versions)
 const FacebookIcon = (props: any) => (
@@ -51,6 +55,17 @@ const YoutubeIcon = (props: any) => (
 );
 
 export default function TermsOfServicePage() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+
+  // Check auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Table of Contents data
   const tocItems = [
     { id: 'agreement', title: '1. Agreement to Terms' },
@@ -74,8 +89,69 @@ export default function TermsOfServicePage() {
 
   return (
     <div className="min-h-screen bg-[#fcfdfe] dark:bg-[#020617]">
-      <Navbar />
-      
+      {/* ========== NAVBAR (Copy your Navbar component here) ========== */}
+      <nav className="fixed top-0 left-0 w-full bg-white dark:bg-[#050b1a] border-b border-slate-200 dark:border-white/5 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 lg:h-20">
+            {/* Logo */}
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+              <div className="w-8 h-8 lg:w-10 lg:h-10 bg-blue-600 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+                <Zap size={16} className="lg:w-5 lg:h-5" fill="white" />
+              </div>
+              <span className="text-lg lg:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                DzD <span className="text-blue-600">Marketing</span>
+              </span>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              <button onClick={() => navigate('/')} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold transition-colors">
+                Home
+              </button>
+              <button onClick={() => navigate('/about')} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold transition-colors">
+                About
+              </button>
+              <button onClick={() => navigate('/terms')} className="px-4 py-2 text-blue-600 dark:text-blue-400 text-sm font-bold border-b-2 border-blue-600">
+                Terms
+              </button>
+              <button onClick={() => navigate('/contact')} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold transition-colors">
+                Contact
+              </button>
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="flex items-center gap-3">
+              {user ? (
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-600/30"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => navigate('/login')}
+                    className="hidden md:block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold transition-colors"
+                  >
+                    Sign In
+                  </button>
+                  <button 
+                    onClick={() => navigate('/signup')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-600/30"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Spacer for fixed navbar */}
+      <div className="h-16 lg:h-20"></div>
+
       {/* Hero Section */}
       <div className="relative pt-20 lg:pt-24 pb-12 lg:pb-16 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/10 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10"></div>
@@ -92,7 +168,7 @@ export default function TermsOfServicePage() {
             </div>
             
             <h1 className="text-4xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tighter mb-4">
-              Terms of <span className="text-blue-600">Service</span>
+              Terms of <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Service</span>
             </h1>
             
             <p className="text-lg lg:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mb-6">
@@ -142,6 +218,20 @@ export default function TermsOfServicePage() {
                   </p>
                 </div>
               </div>
+
+              {/* User Status Badge */}
+              {user && (
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5">
+                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-xl">
+                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
+                      Signed in as
+                    </p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -528,7 +618,7 @@ export default function TermsOfServicePage() {
             
             {/* Brand Column */}
             <div className="lg:col-span-4">
-              <div className="flex items-center gap-2 mb-4 lg:mb-5">
+              <div className="flex items-center gap-2 mb-4 lg:mb-5 cursor-pointer" onClick={() => navigate('/')}>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-xl lg:rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/30">
                   <Zap size={20} className="lg:w-6 lg:h-6" fill="white" />
                 </div>
@@ -567,11 +657,11 @@ export default function TermsOfServicePage() {
             <div className="lg:col-span-2">
               <h3 className="text-sm lg:text-base font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4 lg:mb-5">Quick Links</h3>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Home</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Services</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Dashboard</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">API Docs</a></li>
+                <li><button onClick={() => navigate('/')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Home</button></li>
+                <li><button onClick={() => navigate('/services')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Services</button></li>
+                <li><button onClick={() => navigate('/pricing')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Pricing</button></li>
+                <li><button onClick={() => navigate('/dashboard')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Dashboard</button></li>
+                <li><button onClick={() => navigate('/api-docs')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">API Docs</button></li>
               </ul>
             </div>
             
@@ -579,11 +669,11 @@ export default function TermsOfServicePage() {
             <div className="lg:col-span-2">
               <h3 className="text-sm lg:text-base font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4 lg:mb-5">Support</h3>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Refund Policy</a></li>
+                <li><button onClick={() => navigate('/help')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Help Center</button></li>
+                <li><button onClick={() => navigate('/contact')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Contact Us</button></li>
+                <li><button onClick={() => navigate('/terms')} className="text-blue-600 dark:text-blue-400 text-sm lg:text-base">Terms of Service</button></li>
+                <li><button onClick={() => navigate('/privacy')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/refund')} className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors">Refund Policy</button></li>
               </ul>
             </div>
             
