@@ -1469,7 +1469,7 @@ const placeOrder = async (e: React.FormEvent) => {
                     type="text"
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
-                    placeholder="https://tiktok.com/@username or @username"
+                    placeholder="Enter profile URL or username"
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 font-bold text-sm focus:border-blue-600 outline-none transition-all"
                     required
                   />
@@ -1530,7 +1530,7 @@ const placeOrder = async (e: React.FormEvent) => {
                   <textarea
                     value={customComments}
                     onChange={(e) => setCustomComments(e.target.value)}
-                    placeholder="Enter custom comments (if supported by service)"
+                    placeholder="Enter custom comments"
                     rows={3}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 font-bold text-sm focus:border-blue-600 outline-none transition-all resize-none"
                   />
@@ -1544,7 +1544,7 @@ const placeOrder = async (e: React.FormEvent) => {
                   <textarea
                     value={usernames}
                     onChange={(e) => setUsernames(e.target.value)}
-                    placeholder="Enter usernames (one per line, if supported)"
+                    placeholder="Enter usernames"
                     rows={3}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 font-bold text-sm focus:border-blue-600 outline-none transition-all resize-none"
                   />
@@ -1586,7 +1586,7 @@ const placeOrder = async (e: React.FormEvent) => {
                     ) : (
                       <>
                         <Send size={16} />
-                        Deploy Order
+                        Place Order
                       </>
                     )}
                   </button>
