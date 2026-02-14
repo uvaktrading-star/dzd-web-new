@@ -158,7 +158,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/terms-of-service" element={<TermsofServicePage />} />
-            <Route path="/about-us" element={<AboutUsPage />} />
+            <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
           </Routes>
         </main>
 
