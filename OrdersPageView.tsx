@@ -1512,48 +1512,28 @@ const placeOrder = async (e: React.FormEvent) => {
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 font-bold text-sm focus:border-blue-600 outline-none transition-all"
                     required
                   />
-                  
-{/* Price Display with Profit - UPDATED */}
+                  {/* Price Display - Final Price Only */}
 {serviceDetails && quantity && (
   <div className="mt-2 p-3 bg-blue-600/5 rounded-xl border border-blue-600/20">
-    <div className="flex justify-between items-center mb-2">
-      <span className="text-[9px] font-black uppercase text-slate-500">Price Breakdown:</span>
+    <div className="flex justify-between items-center">
+      <span className="text-[9px] font-black uppercase text-slate-500">Total Price:</span>
+      <div className="text-right">
+        <span className="text-lg font-black text-blue-600">
+          LKR {calculatePriceWithProfit(
+            usdRate,
+            parseInt(quantity),
+            parseFloat(serviceDetails.rate)
+          ).lkr.toFixed(2)}
+        </span>
+        <p className="text-[8px] font-bold text-slate-400">
+          ≈ ${calculatePriceWithProfit(
+            usdRate,
+            parseInt(quantity),
+            parseFloat(serviceDetails.rate)
+          ).usd.toFixed(2)} USD
+        </p>
+      </div>
     </div>
-    {(() => {
-      const baseUsd = (parseInt(quantity) / 1000) * parseFloat(serviceDetails.rate);
-      const baseLkr = convertUsdToLkr(baseUsd, usdRate);
-      const totalWithProfit = calculatePriceWithProfit(
-        usdRate,
-        parseInt(quantity),
-        parseFloat(serviceDetails.rate)
-      );
-      
-      return (
-        <>
-          <div className="flex justify-between items-center text-[10px]">
-            <span className="text-slate-500">Base price:</span>
-            <span className="font-bold text-slate-700 dark:text-slate-300">
-              LKR {baseLkr.toFixed(2)} (${baseUsd.toFixed(2)})
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-[10px] text-emerald-600">
-            <span>+ Profit (fixed):</span>
-            <span className="font-bold">LKR 50.00</span>
-          </div>
-          <div className="border-t border-blue-600/20 my-2 pt-2 flex justify-between items-center">
-            <span className="text-[9px] font-black uppercase text-slate-500">Total Price:</span>
-            <div className="text-right">
-              <span className="text-lg font-black text-blue-600">
-                LKR {totalWithProfit.lkr.toFixed(2)}
-              </span>
-              <p className="text-[8px] font-bold text-slate-400">
-                ≈ ${totalWithProfit.usd.toFixed(2)} USD
-              </p>
-            </div>
-          </div>
-        </>
-      );
-    })()}
   </div>
 )}
 
