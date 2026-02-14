@@ -6,23 +6,29 @@ import {
   Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase'; // Import Firebase auth
+import { auth } from '../firebase'; 
 
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
+const EXCHANGE_API = "https://v6.exchangerate-api.com/v6/be291495375008a1e603a49a/latest/USD";
+
+// Time constants
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 export default function BillingPageView({ user: propUser }: any) {
   const navigate = useNavigate();
   
-  // State for user data
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   
-  // Form states
   const [amount, setAmount] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
   const [userBalance, setUserBalance] = useState({ total_balance: "0.00", pending_balance: "0.00" });
+  
+  // USD Rate State
+  const [usdRate, setUsdRate] = useState(310); // Default rate
+
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -34,36 +40,61 @@ export default function BillingPageView({ user: propUser }: any) {
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Listen to auth state
+  // --- 1. Fetch & Auto-Update USD Rate (Every 6 Hours) ---
+  useEffect(() => {
+    const fetchUsdRate = async () => {
+      try {
+        const res = await fetch(EXCHANGE_API);
+        const data = await res.json();
+        if (data.result === "success") {
+          setUsdRate(data.conversion_rates.LKR);
+          console.log(`Rate Updated: 1 USD = ${data.conversion_rates.LKR} LKR`);
+        }
+      } catch (err) {
+        console.error("Exchange API failed, using default 310", err);
+      }
+    };
+
+    // Initial fetch
+    fetchUsdRate();
+
+    // Set interval for 6 hours
+    const interval = setInterval(fetchUsdRate, SIX_HOURS_IN_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Balance conversion logic
+  const convertToUsd = (lkrAmount: string) => {
+    const val = parseFloat(lkrAmount);
+    if (isNaN(val)) return "0.00";
+    return (val / usdRate).toFixed(2);
+  };
+
+  // Auth & User logic
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
-        // Create user object with all needed fields
         setCurrentUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName,
-          // Add any other fields you need
         });
       } else {
         setCurrentUser(null);
-        // Redirect to home if not logged in
         navigate('/');
       }
       setLoadingUser(false);
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  // Update from prop if provided (backup)
   useEffect(() => {
     if (propUser && !currentUser) {
       setCurrentUser(propUser);
     }
-  }, [propUser]);
+  }, [propUser, currentUser]);
 
-  // Load cleared notifications from localStorage if user exists
   useEffect(() => {
     if (currentUser?.uid) {
       const saved = localStorage.getItem(`cleared_notifs_${currentUser?.uid}`);
@@ -71,7 +102,6 @@ export default function BillingPageView({ user: propUser }: any) {
     }
   }, [currentUser]);
 
-  // Fetch balance and history if user exists
   useEffect(() => {
     if (currentUser?.uid) {
       fetchBalance(currentUser.uid);
@@ -79,25 +109,19 @@ export default function BillingPageView({ user: propUser }: any) {
     }
   }, [currentUser, clearedNotifications]);
 
-  // Handle scroll to hide/show header
+  // UI Scroll Logic
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
       if (currentScrollY > lastScrollY && currentScrollY > 80) {
         setShowHeader(false);
       } else {
         setShowHeader(true);
       }
-      
       setLastScrollY(currentScrollY);
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
   const showNotification = (msg: string, type: 'success' | 'error') => {
@@ -113,7 +137,7 @@ export default function BillingPageView({ user: propUser }: any) {
         total_balance: parseFloat(data.total_balance || 0).toFixed(2),
         pending_balance: parseFloat(data.pending_balance || 0).toFixed(2)
       });
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error("Balance fetch error:", error); }
   };
 
   const fetchHistory = async (uid: string) => {
@@ -121,13 +145,12 @@ export default function BillingPageView({ user: propUser }: any) {
       const response = await fetch(`${WORKER_URL}/get-history?userId=${uid}`);
       const data = await response.json();
       setHistory(data);
-      
       const alerts = data.filter((item: any) => 
         (item.status === 'approved' || item.status === 'rejected') && 
         !clearedNotifications.includes(item.id || item.created_at)
       );
       setNotifications(alerts);
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error("History fetch error:", error); }
   };
 
   const copyToClipboard = (text: string) => {
@@ -174,7 +197,7 @@ export default function BillingPageView({ user: propUser }: any) {
     } finally { setUploading(false); }
   };
 
-  // Show loading state while checking auth
+  // Loading State
   if (loadingUser) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -186,7 +209,7 @@ export default function BillingPageView({ user: propUser }: any) {
     );
   }
 
-  // If no user after loading, show login prompt
+  // Not Logged In State
   if (!currentUser) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -207,7 +230,7 @@ export default function BillingPageView({ user: propUser }: any) {
 
   return (
     <div className="relative animate-fade-in pb-32">
-      {/* --- TOAST --- */}
+      {/* TOAST SYSTEM */}
       {toast.show && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[250] w-[90%] max-w-md">
           <div className={`flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border animate-in slide-in-from-top duration-300 ${
@@ -225,7 +248,7 @@ export default function BillingPageView({ user: propUser }: any) {
         </div>
       )}
 
-      {/* --- NOTIFICATIONS MODAL --- */}
+      {/* NOTIFICATIONS MODAL */}
       {showNotifications && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="w-full max-w-md bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95">
@@ -277,7 +300,7 @@ export default function BillingPageView({ user: propUser }: any) {
         </div>
       )}
 
-      {/* --- HISTORY MODAL --- */}
+      {/* TRANSACTION HISTORY MODAL */}
       {showHistory && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="w-full max-w-2xl bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95">
@@ -323,7 +346,7 @@ export default function BillingPageView({ user: propUser }: any) {
         </div>
       )}
 
-      {/* Main Header - Same as Services/Orders */}
+      {/* HEADER SECTION */}
       <div 
         className={`-mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-6 bg-[#fcfdfe] dark:bg-[#020617] border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300 ${
           showHeader ? 'translate-y-0 opacity-100 relative' : '-translate-y-full opacity-0 pointer-events-none absolute'
@@ -372,7 +395,7 @@ export default function BillingPageView({ user: propUser }: any) {
         </div>
       </div>
 
-      {/* Sticky Mini Header - Same as Services/Orders */}
+      {/* STICKY HEADER WHEN SCROLLED */}
       {!showHeader && (
         <div className="sticky top-0 z-40 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-3 bg-[#fcfdfe]/95 dark:bg-[#020617]/95 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 shadow-sm transition-all duration-300">
           <div className="max-w-6xl mx-auto">
@@ -392,10 +415,9 @@ export default function BillingPageView({ user: propUser }: any) {
         </div>
       )}
 
-      {/* Main Content Area - Same padding as Services/Orders */}
+      {/* MAIN CONTENT */}
       <div className="mt-1.5 pt-1.5">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Mobile Action Buttons (only visible on mobile) */}
           <div className="flex md:hidden items-center gap-3">
             <button 
               onClick={() => setShowHistory(true)}
@@ -411,21 +433,29 @@ export default function BillingPageView({ user: propUser }: any) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Total Balance Card */}
             <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-8 text-white shadow-xl shadow-blue-600/20">
               <div className="relative z-10">
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-70 mb-1">Available Credits</p>
                 <h3 className="text-4xl font-black tracking-tighter tabular-nums flex items-baseline gap-2">
                   <span className="text-lg opacity-60">LKR</span> {userBalance.total_balance}
                 </h3>
+                <p className="text-[11px] font-black mt-1 opacity-80 bg-black/20 w-fit px-3 py-1 rounded-full border border-white/10">
+                   ≈ ${convertToUsd(userBalance.total_balance)} USD
+                </p>
               </div>
               <WalletIcon size={120} className="absolute -right-6 -bottom-6 opacity-10 rotate-12" />
             </div>
             
+            {/* Pending Balance Card */}
             <div className="rounded-[2rem] bg-white dark:bg-[#0f172a]/40 p-8 border border-slate-200 dark:border-white/5">
               <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1">In Verification</p>
               <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">
                 LKR {userBalance.pending_balance}
               </h3>
+              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                 ≈ ${convertToUsd(userBalance.pending_balance)} USD
+              </p>
               <div className="mt-4 flex items-center gap-2">
                 <div className="h-1.5 flex-1 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                   <div className={`h-full bg-amber-500 transition-all duration-1000 ${parseFloat(userBalance.pending_balance) > 0 ? 'w-1/3 animate-pulse' : 'w-0'}`}></div>
@@ -435,9 +465,8 @@ export default function BillingPageView({ user: propUser }: any) {
             </div>
           </div>
 
-          {/* CONTENT AREA */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Gateways */}
+            {/* BANK DETAILS */}
             <div className="lg:col-span-5 space-y-6">
               <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1 font-mono">PAYMENT DETAILS</h3>
               <div className="bg-white dark:bg-[#0f172a]/40 rounded-3xl p-6 border border-slate-200 dark:border-white/5">
@@ -478,7 +507,7 @@ export default function BillingPageView({ user: propUser }: any) {
               </div>
             </div>
 
-            {/* Deposit Interface */}
+            {/* DEPOSIT FORM */}
             <div className="lg:col-span-7">
               <div className="bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] p-6 md:p-8 border border-slate-200 dark:border-white/5 shadow-sm">
                 <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-6 flex items-center gap-2 font-mono uppercase">
