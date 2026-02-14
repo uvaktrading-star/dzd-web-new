@@ -114,7 +114,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
             <div className="hidden md:flex items-center space-x-8 font-bold uppercase tracking-widest text-[10px]">
               <Link to="/" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Home</Link>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">About Us</a>
-              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
+              <a href="/terms-of-service" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
               <Link to="/Contact" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Contact Us</Link>
               <Link to="/Support" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Support</Link>
             </div>
@@ -247,7 +247,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                 <div className="space-y-0.5">
                   <NavItem icon={<Home size={16} />} label="Home" onClick={() => handleNavigation('/')} />
                   <NavItem icon={<Info size={16} />} label="About Us" onClick={() => handleNavigation('/about')} />
-                  <NavItem icon={<FileText size={16} />} label="Terms of Service" onClick={() => handleNavigation('/terms')} />
+                  <NavItem icon={<FileText size={16} />} label="Terms of Service" onClick={() => handleNavigation('/terms-of-service')} />
                   <NavItem icon={<Mail size={16} />} label="Contact Us" onClick={() => handleNavigation('/contact')} />
                   <NavItem icon={<HelpCircle size={16} />} label="Support" onClick={() => handleNavigation('/support')} />
                 </div>
