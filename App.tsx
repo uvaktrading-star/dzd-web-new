@@ -15,6 +15,7 @@ import HowToUseView from './HowToUseView';
 import ArticleView from './ArticleView';
 import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
+import ContactPage from './Contact';
 
 // 👇 Add ScrollToTop component here
 // 👇 Update ScrollToTop component
@@ -153,6 +154,7 @@ export default function App() {
             <Route path="/support/category/:categorySlug" element={<CategoryView />} />
             <Route path="/wallet" element={<WalletPage user={user} />} />
             <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/contact" element={<ContactPage />} />
           </Routes>
         </main>
 
