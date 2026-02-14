@@ -116,7 +116,7 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">About Us</a>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
               <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Contact Us</a>
-              <a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Support</a>
+              <Link to="/Support" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Support</Link>
             </div>
 
             {/* Desktop Right Section */}
