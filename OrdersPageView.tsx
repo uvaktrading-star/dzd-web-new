@@ -28,14 +28,14 @@ import { auth, db } from './firebase';
 import { 
   saveOrderToFirestore, 
   getUserOrders, 
-  updateOrderStatus,
-  deductFromWallet 
+  updateOrderStatus
 } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Exchange rate API
 const EXCHANGE_API = "https://v6.exchangerate-api.com/v6/be291495375008a1e603a49a/latest/USD";
+const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 // Order status badge component
@@ -521,122 +521,131 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
   // ============================================
   // PLACE ORDER - WITH WALLET DEDUCTION
   // ============================================
-  const placeOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+const placeOrder = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!currentUser) {
+    setOrderError('You must be logged in to place an order');
+    return;
+  }
+
+  if (!selectedServiceId || !link || !quantity) {
+    setOrderError('Service, link, and quantity are required');
+    return;
+  }
+
+  // Calculate price with profit
+  const priceWithProfit = calculatePriceWithProfit(
+    usdRate,
+    parseInt(quantity) || 0,
+    parseFloat(serviceDetails?.rate || 0)
+  );
+
+  // Check if user has sufficient balance
+  if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
+    setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
+    return;
+  }
+
+  setOrderLoading(true);
+  setOrderError('');
+  setOrderSuccess(null);
+
+  try {
+    // Prepare API parameters
+    const params: Record<string, string> = {
+      action: 'add',
+      service: selectedServiceId,
+      link: link,
+      quantity: quantity
+    };
+
+    if (customComments) params.comments = customComments;
+    if (usernames) params.usernames = usernames;
+
+    // 1. Call SMM API to place order
+    const data = await fetchSmmApi(params);
     
-    if (!currentUser) {
-      setOrderError('You must be logged in to place an order');
-      return;
-    }
+    if (data && data.order) {
+      // 2. Deduct amount from wallet using the worker endpoint
+      const deductionResponse = await fetch(`${WORKER_URL}/deduct-balance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: currentUser.uid,
+          amount: priceWithProfit.lkr,
+          description: `Order #${data.order} - ${serviceDetails?.name || 'SMM Order'}`
+        }),
+      });
 
-    if (!selectedServiceId || !link || !quantity) {
-      setOrderError('Service, link, and quantity are required');
-      return;
-    }
+      const deductionResult = await deductionResponse.json();
 
-    // Calculate price with profit
-    const priceWithProfit = calculatePriceWithProfit(
-      usdRate,
-      parseInt(quantity) || 0,
-      parseFloat(serviceDetails?.rate || 0)
-    );
+      if (!deductionResult.success) {
+        throw new Error(deductionResult.error || 'Failed to deduct from wallet. Order cancelled.');
+      }
 
-    // Check if user has sufficient balance
-    if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
-      setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
-      return;
-    }
-
-    setOrderLoading(true);
-    setOrderError('');
-    setOrderSuccess(null);
-
-    try {
-      // Prepare API parameters
-      const params: Record<string, string> = {
-        action: 'add',
-        service: selectedServiceId,
+      // 3. Save order to Firestore with user ID (store the LKR amount with profit)
+      const orderData = {
+        orderId: data.order,
+        serviceId: selectedServiceId,
+        serviceName: serviceDetails?.name || `Service #${selectedServiceId}`,
         link: link,
-        quantity: quantity
+        quantity: parseInt(quantity),
+        charge: priceWithProfit.lkr.toFixed(2), // Store LKR amount with profit
+        chargeUsd: priceWithProfit.usd.toFixed(2), // Store USD equivalent
+        status: 'Pending',
+        remains: parseInt(quantity),
+        date: new Date().toISOString()
       };
 
-      if (customComments) params.comments = customComments;
-      if (usernames) params.usernames = usernames;
-
-      // 1. Call SMM API to place order
-      const data = await fetchSmmApi(params);
+      await saveOrderToFirestore(currentUser.uid, orderData);
       
-      if (data && data.order) {
-        // 2. Deduct amount from wallet (LKR amount with profit)
-        const deductionSuccess = await deductFromWallet(
-          currentUser.uid, 
-          priceWithProfit.lkr,
-          `Order #${data.order} - ${serviceDetails?.name}`
-        );
-
-        if (!deductionSuccess) {
-          throw new Error('Failed to deduct from wallet. Order cancelled.');
+      // 4. Refresh balance
+      await fetchUserBalance(currentUser.uid);
+      
+      // 5. Show success message
+      setOrderSuccess({
+        order: data.order,
+        message: 'Order placed successfully!',
+        price: {
+          lkr: priceWithProfit.lkr.toFixed(2),
+          usd: priceWithProfit.usd.toFixed(2)
         }
-
-        // 3. Save order to Firestore with user ID (store the LKR amount with profit)
-        const orderData = {
-          orderId: data.order,
-          serviceId: selectedServiceId,
-          serviceName: serviceDetails?.name || `Service #${selectedServiceId}`,
-          link: link,
-          quantity: parseInt(quantity),
-          charge: priceWithProfit.lkr.toFixed(2), // Store LKR amount with profit
-          chargeUsd: priceWithProfit.usd.toFixed(2), // Store USD equivalent
-          status: 'Pending',
-          remains: parseInt(quantity),
-          date: new Date().toISOString()
-        };
-
-        await saveOrderToFirestore(currentUser.uid, orderData);
-        
-        // 4. Refresh balance
-        await fetchUserBalance(currentUser.uid);
-        
-        // 5. Show success message
-        setOrderSuccess({
-          order: data.order,
-          message: 'Order placed successfully!',
-          price: {
-            lkr: priceWithProfit.lkr.toFixed(2),
-            usd: priceWithProfit.usd.toFixed(2)
-          }
-        });
-        
-        // 6. Reset form
-        setSelectedService('');
-        setSelectedServiceId('');
-        setServiceDetails(null);
-        setLink('');
-        setQuantity('');
-        setCustomComments('');
-        setUsernames('');
-        setServiceSearch('');
-        setShowServiceDropdown(false);
-        
-        // 7. Reload orders
-        await loadUserOrders();
-        
-        // 8. Switch to orders view after 2 seconds
-        setTimeout(() => {
-          setActiveView('orders');
-          setOrderSuccess(null);
-        }, 2000);
-      } else if (data && data.error) {
-        setOrderError(data.error);
-      } else {
-        setOrderError('Failed to place order. Unknown response.');
-      }
-    } catch (err: any) {
-      setOrderError(err.message || 'Order placement failed. Please try again.');
-    } finally {
-      setOrderLoading(false);
+      });
+      
+      // 6. Reset form
+      setSelectedService('');
+      setSelectedServiceId('');
+      setServiceDetails(null);
+      setLink('');
+      setQuantity('');
+      setCustomComments('');
+      setUsernames('');
+      setServiceSearch('');
+      setShowServiceDropdown(false);
+      
+      // 7. Reload orders
+      await loadUserOrders();
+      
+      // 8. Switch to orders view after 2 seconds
+      setTimeout(() => {
+        setActiveView('orders');
+        setOrderSuccess(null);
+      }, 2000);
+    } else if (data && data.error) {
+      setOrderError(data.error);
+    } else {
+      setOrderError('Failed to place order. Unknown response.');
     }
-  };
+  } catch (err: any) {
+    setOrderError(err.message || 'Order placement failed. Please try again.');
+  } finally {
+    setOrderLoading(false);
+  }
+};
 
   // ============================================
   // UTILITY FUNCTIONS
