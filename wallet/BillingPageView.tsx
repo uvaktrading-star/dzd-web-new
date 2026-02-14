@@ -350,7 +350,9 @@ export default function BillingPageView({ user: propUser }: any) {
                 <History size={14} /> History
               </button>
 
-              <button className="hidden md:flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+              <button
+                onClick={() => navigate('/support')}
+                className="hidden md:flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
                 <MessageSquare size={14} /> Support
               </button>
               
@@ -401,12 +403,13 @@ export default function BillingPageView({ user: propUser }: any) {
             >
               <History size={14} /> History
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
+            <button 
+              onClick={() => navigate('/support')}
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
               <MessageSquare size={14} /> Support
             </button>
           </div>
 
-          {/* BALANCE GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 p-8 text-white shadow-xl shadow-blue-600/20">
               <div className="relative z-10">
@@ -417,7 +420,7 @@ export default function BillingPageView({ user: propUser }: any) {
               </div>
               <WalletIcon size={120} className="absolute -right-6 -bottom-6 opacity-10 rotate-12" />
             </div>
-
+            
             <div className="rounded-[2rem] bg-white dark:bg-[#0f172a]/40 p-8 border border-slate-200 dark:border-white/5">
               <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1">In Verification</p>
               <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">
@@ -457,7 +460,7 @@ export default function BillingPageView({ user: propUser }: any) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-0.5">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Account Number</p>
-                    <h4 className="text-md font-mono font-black text-blue-500 tracking-wider">7178xxxx</h4>
+                    <h4 className="text-md font-mono font-black text-blue-500 tracking-wider">71782008</h4>
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Branch</p>
