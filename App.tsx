@@ -16,6 +16,7 @@ import ArticleView from './ArticleView';
 import CategoryView from './CategoryView';
 import WalletPage from './wallet/BillingPageView';
 import ContactPage from './Contact';
+import TermsofServicePage from './TermsofService';
 
 // 👇 Add ScrollToTop component here ,,
 // 👇 Update ScrollToTop component
@@ -155,6 +156,7 @@ export default function App() {
             <Route path="/wallet" element={<WalletPage user={user} />} />
             <Route path="*" element={<Navigate to="/" />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/terms-of-service" element={<TermsofServicePage />} />
           </Routes>
         </main>
 
