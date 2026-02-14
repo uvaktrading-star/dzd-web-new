@@ -1513,8 +1513,6 @@ const placeOrder = async (e: React.FormEvent) => {
                     required
                   />
                   
-                  {/* Price Display with Profit - UPDATED */}
-{/* Price Display - Final Price Only */}
 {serviceDetails && quantity && (
   <div className="mt-2 p-3 bg-blue-600/5 rounded-xl border border-blue-600/20">
     <div className="flex justify-between items-center">
