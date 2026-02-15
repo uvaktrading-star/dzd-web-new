@@ -8,8 +8,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase'; 
 
-const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
-const EXCHANGE_API = "https://v6.exchangerate-api.com/v6/be291495375008a1e603a49a/latest/USD";
+const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL;
+const EXCHANGE_API = process.env.NEXT_PUBLIC_EXCHANGE_API;
 
 // Time constants
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
