@@ -17,13 +17,13 @@ import {
 
 // Firebase configuration for DzD Marketing
 const firebaseConfig = {
-  apiKey: "AIzaSyC28aF8yv5f0jEOP2XnnYbQkkdj8ehUpxo",
-  authDomain: "dzd-marketing.firebaseapp.com",
-  projectId: "dzd-marketing",
-  storageBucket: "dzd-marketing.firebasestorage.app",
-  messagingSenderId: "784291112534",
-  appId: "1:784291112534:web:1c499259b8bcb82faafdf7",
-  measurementId: "G-46S7J6JFP5"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
