@@ -187,7 +187,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 text-xs sm:text-sm hover:scale-105 active:scale-95 transition-all"
         >
           <PlusCircle size={16} className="sm:w-[18px] sm:h-[18px]" /> 
-          <span>New Deployment</span>
+          <span>New Order</span>
         </button>
       </div>
 
@@ -358,7 +358,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
                 className="mt-4 sm:mt-6 flex items-center gap-2 mx-auto bg-blue-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-[10px] sm:text-xs hover:scale-105 transition-all"
               >
                 <PlusCircle size={12} className="sm:w-[14px] sm:h-[14px]" />
-                Deploy Now
+                Create Your First Order
               </button>
             </div>
           )}
