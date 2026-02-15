@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { 
   MessageCircle, 
   X, 
@@ -11,7 +13,11 @@ import {
   HelpCircle,
   ChevronDown,
   Trash2,
-  Zap
+  Zap,
+  List,
+  ListOrdered,
+  Quote,
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface Message {
@@ -24,7 +30,15 @@ export default function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?\n\nTry asking me about:\n- Service recommendations\n- Order help\n- Platform questions\n- Technical support"
+      content: `Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?
+
+Try asking me about:
+
+• Service recommendations and pricing
+• Order processing and status
+• Platform-specific strategies
+• Technical support and API integration
+• Marketing tips and best practices`
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -78,7 +92,7 @@ export default function AIChatWidget() {
     }
   }, [isOpen]);
 
-  // Handle click outside to close on desktop and mobile
+  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (isOpen && 
@@ -120,13 +134,13 @@ export default function AIChatWidget() {
     let prompt = '';
     switch (action) {
       case 'code':
-        prompt = "Help me with API integration code for my SMM panel.";
+        prompt = "Show me code examples for integrating your SMM API with my website.";
         break;
       case 'write':
-        prompt = "Help me write a promotional message for my social media services.";
+        prompt = "Help me create engaging social media content for my Instagram growth campaign.";
         break;
       case 'explain':
-        prompt = "Explain how SMM panels work and how to choose the right services.";
+        prompt = "Explain the difference between organic and paid social media growth strategies.";
         break;
     }
     setInputValue(prompt);
@@ -142,7 +156,15 @@ export default function AIChatWidget() {
     setMessages([
       {
         role: 'assistant',
-        content: "Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?\n\nTry asking me about:\n- Service recommendations\n- Order help\n- Platform questions\n- Technical support"
+        content: `Hi! I'm your **AI assistant**. How can I help you with your **social media marketing** today?
+
+Try asking me about:
+
+• Service recommendations and pricing
+• Order processing and status
+• Platform-specific strategies
+• Technical support and API integration
+• Marketing tips and best practices`
       }
     ]);
     localStorage.removeItem(CONVERSATION_KEY);
@@ -215,9 +237,17 @@ export default function AIChatWidget() {
       console.error('Chat error:', error);
       setShowTyping(false);
       
-      const errorMessage = error instanceof Error && error.message.includes('Failed to fetch')
-        ? '**Network error** - Please check your internet connection and try again.'
-        : '**Sorry, I encountered an error** - Please try again in a moment.';
+      const errorMessage = `**Network Error**
+
+We couldn't connect to the AI service. Please check:
+
+• Your internet connection
+• Try again in a few moments
+• Contact support if the issue persists
+
+\`\`\`
+Error: ${error instanceof Error ? error.message : 'Unknown error'}
+\`\`\``;
       
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
     } finally {
@@ -253,7 +283,7 @@ export default function AIChatWidget() {
       {/* Chat Window */}
       <div
         ref={chatWindowRef}
-        className={`absolute bottom-16 right-0 w-[380px] md:w-[400px] h-[600px] bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 origin-bottom-right ${
+        className={`absolute bottom-16 right-0 w-[380px] md:w-[450px] h-[650px] bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 origin-bottom-right ${
           isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'
         }`}
       >
@@ -305,45 +335,134 @@ export default function AIChatWidget() {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex items-start gap-2 max-w-[85%]">
+                <div className="flex items-start gap-2 max-w-[90%]">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
                     <Bot size={14} />
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 flex-1">
                     <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                       AI Assistant
                     </span>
                     <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
                       <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw]}
                         components={{
-                          h1: ({ node, ...props }) => <h1 className="text-lg font-black text-slate-900 dark:text-white mb-2" {...props} />,
-                          h2: ({ node, ...props }) => <h2 className="text-base font-black text-slate-900 dark:text-white mb-2" {...props} />,
-                          h3: ({ node, ...props }) => <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1" {...props} />,
-                          p: ({ node, ...props }) => <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-2 last:mb-0" {...props} />,
-                          strong: ({ node, ...props }) => <strong className="font-black text-blue-600 dark:text-blue-400" {...props} />,
-                          ul: ({ node, ...props }) => <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-300 space-y-1 mb-2" {...props} />,
-                          ol: ({ node, ...props }) => <ol className="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-1 mb-2" {...props} />,
-                          li: ({ node, ...props }) => <li className="text-sm" {...props} />,
-                          code: ({ node, inline, ...props }) => 
-                            inline ? 
-                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1 py-0.5 rounded text-xs font-mono" {...props} /> :
-                              <code className="block bg-slate-100 dark:bg-slate-800 p-3 rounded-xl text-xs font-mono overflow-x-auto" {...props} />,
-                          pre: ({ node, ...props }) => <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl overflow-x-auto mb-3" {...props} />,
+                          // Headers
+                          h1: ({ node, ...props }) => (
+                            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-white/10" {...props} />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 mb-2" {...props} />
+                          ),
+                          h3: ({ node, ...props }) => (
+                            <h3 className="text-base font-black text-blue-600 dark:text-blue-400 mt-3 mb-1" {...props} />
+                          ),
+                          h4: ({ node, ...props }) => (
+                            <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider" {...props} />
+                          ),
+                          
+                          // Paragraphs
+                          p: ({ node, ...props }) => (
+                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3 last:mb-0" {...props} />
+                          ),
+                          
+                          // Text formatting
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-black text-blue-600 dark:text-blue-400" {...props} />
+                          ),
+                          em: ({ node, ...props }) => (
+                            <em className="italic text-slate-700 dark:text-slate-300" {...props} />
+                          ),
+                          
+                          // Lists
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="text-sm leading-relaxed pl-1 marker:text-blue-600" {...props} />
+                          ),
+                          
+                          // Tables
+                          table: ({ node, ...props }) => (
+                            <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-white/10">
+                              <table className="w-full text-sm divide-y divide-slate-200 dark:divide-white/10" {...props} />
+                            </div>
+                          ),
+                          thead: ({ node, ...props }) => (
+                            <thead className="bg-slate-50 dark:bg-white/5" {...props} />
+                          ),
+                          tbody: ({ node, ...props }) => (
+                            <tbody className="divide-y divide-slate-200 dark:divide-white/10" {...props} />
+                          ),
+                          tr: ({ node, ...props }) => (
+                            <tr className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" {...props} />
+                          ),
+                          th: ({ node, ...props }) => (
+                            <th className="px-3 py-2 text-left text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props} />
+                          ),
+                          td: ({ node, ...props }) => (
+                            <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400" {...props} />
+                          ),
+                          
+                          // Code blocks
+                          code: ({ node, inline, className, children, ...props }) => {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline ? (
+                              <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5">
+                                <code className="text-xs font-mono text-slate-800 dark:text-slate-200" {...props}>
+                                  {children}
+                                </code>
+                              </pre>
+                            ) : (
+                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md text-xs font-mono" {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                          pre: ({ node, ...props }) => (
+                            <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5 text-xs font-mono" {...props} />
+                          ),
+                          
+                          // Blockquotes
+                          blockquote: ({ node, ...props }) => (
+                            <blockquote className="border-l-4 border-blue-600 pl-4 py-1 my-3 text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-xl" {...props} />
+                          ),
+                          
+                          // Links
+                          a: ({ node, ...props }) => (
+                            <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer" {...props}>
+                              {props.children} <LinkIcon size={12} />
+                            </a>
+                          ),
+                          
+                          // Horizontal rule
+                          hr: ({ node, ...props }) => (
+                            <hr className="my-4 border-t border-slate-200 dark:border-white/10" {...props} />
+                          ),
+                          
+                          // Line breaks
+                          br: ({ node, ...props }) => (
+                            <br className="mb-2" {...props} />
+                          ),
                         }}
                       >
-                        {msg.content}
+                        {msg.content.replace(/<br\s*\/?>/g, '\n')}
                       </ReactMarkdown>
                     </div>
                   </div>
                 </div>
               )}
               {msg.role === 'user' && (
-                <div className="flex flex-col gap-1 items-end max-w-[85%]">
+                <div className="flex flex-col gap-1 items-end max-w-[80%]">
                   <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
                     You
                   </span>
                   <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl rounded-br-none p-3 shadow-lg">
-                    <p className="text-sm text-white whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-sm text-white whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
                 </div>
               )}
@@ -357,7 +476,7 @@ export default function AIChatWidget() {
                 <Bot size={14} />
               </div>
               <div className="bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                   <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -428,7 +547,7 @@ export default function AIChatWidget() {
               <Zap size={10} className="text-blue-600" /> Powered by DzD AI Labs
             </p>
             <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">
-              Shift + Enter for new line
+              Shift + Enter
             </p>
           </div>
         </div>
