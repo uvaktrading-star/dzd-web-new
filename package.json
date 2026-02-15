@@ -16,7 +16,8 @@
     "firebase": "^12.9.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "rehype-raw": "^7.0.0"
+    "rehype-raw": "^7.0.0",
+    "nodemailer": "^8.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
