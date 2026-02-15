@@ -257,19 +257,19 @@ export default function AboutPage({ onSignupClick }: { onSignupClick?: () => voi
   const team = [
     {
       name: 'Danuka Dissanayake',
-      role: 'Founder & CEO',
+      role: 'Admin Team',
       image: 'https://i.pravatar.cc/150?img=8',
       social: { twitter: '#', linkedin: '#', instagram: '#' }
     },
     {
-      name: 'Aadil',
-      role: 'Technical Lead',
+      name: 'Aadil Mohomade',
+      role: 'Admin Team',
       image: 'https://i.pravatar.cc/150?img=5',
       social: { twitter: '#', linkedin: '#', instagram: '#' }
     },
     {
-      name: 'Akash',
-      role: 'Customer Success Manager',
+      name: 'Akash ',
+      role: 'Admin Team',
       image: 'https://i.pravatar.cc/150?img=7',
       social: { twitter: '#', linkedin: '#', instagram: '#' }
     }
@@ -449,56 +449,152 @@ export default function AboutPage({ onSignupClick }: { onSignupClick?: () => voi
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-[#0a0f1c]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-full mb-4">
-              <Users size={14} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                THE TEAM
-              </span>
+{/* Team Section - Redesigned Premium */}
+<section className="py-16 lg:py-24 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-[#0a0f1c]/30">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    {/* Section Header - Minimalist Premium */}
+    <div className="text-center max-w-2xl mx-auto mb-12">
+      <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-full mb-4 border border-slate-200 dark:border-white/10">
+        <Users size={14} className="text-slate-500 dark:text-slate-400" />
+        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          The Team
+        </span>
+      </div>
+      <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+        Meet the <span className="text-slate-500 dark:text-slate-400">Core Team</span>
+      </h2>
+      <p className="text-slate-400 dark:text-slate-500 text-base lg:text-lg max-w-xl mx-auto font-light">
+        Three dedicated professionals working hard to make DzD Marketing the best SMM panel.
+      </p>
+      {/* Minimal decorative line */}
+      <div className="w-16 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-white/10 to-transparent mx-auto mt-6"></div>
+    </div>
+    
+    {/* Team Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10 max-w-5xl mx-auto">
+      {team.map((member, index) => (
+        <TeamMember key={index} {...member} />
+      ))}
+    </div>
+
+    {/* Team Message - Completely Redesigned Premium */}
+    <div className="mt-24 text-center max-w-3xl mx-auto relative">
+      {/* Premium background layers */}
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-200/30 to-slate-300/30 dark:from-white/5 dark:to-white/0 rounded-[2.5rem] blur-2xl"></div>
+      <div className="absolute inset-0 bg-white/50 dark:bg-[#0a0f1c]/50 rounded-[2.5rem] backdrop-blur-sm"></div>
+      
+      {/* Main card */}
+      <div className="relative bg-white dark:bg-[#0a0f1c] p-10 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl">
+        
+        {/* Top decorative line */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-px bg-gradient-to-r from-transparent via-slate-400 dark:via-white/20 to-transparent"></div>
+        
+        {/* Premium badge */}
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="bg-white dark:bg-[#0a0f1c] text-slate-500 dark:text-slate-400 px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-white/10 rounded-full">
+            Founder's Note
+          </span>
+        </div>
+
+        {/* Minimal icon */}
+        <div className="mb-6 opacity-10">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto text-slate-500 dark:text-white">
+            <path d="M20 12H4M12 4v16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+
+        {/* Quote */}
+        <p className="text-xl lg:text-2xl text-slate-700 dark:text-slate-300 font-light leading-relaxed mb-8 max-w-2xl mx-auto px-4">
+          <span className="text-slate-400 dark:text-slate-500 text-2xl mr-2">"</span>
+          We're not just a team, we're a family. 
+          <span className="block mt-3 text-slate-900 dark:text-white font-medium">
+            Every customer who trusts us becomes part of our story.
+          </span>
+          <span className="text-slate-400 dark:text-slate-500 text-2xl ml-2">"</span>
+        </p>
+
+        {/* Founder info with social buttons */}
+        <div className="flex flex-col items-center gap-4">
+          {/* Avatar and name */}
+          <div className="flex items-center gap-4">
+            {/* Avatar with premium border */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-400 to-slate-500 dark:from-white/20 dark:to-white/5 rounded-full blur-sm opacity-50"></div>
+              <div className="relative w-14 h-14 rounded-full bg-white dark:bg-[#0f172a] p-0.5">
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  <img 
+                    src="https://i.pravatar.cc/150?img=8" 
+                    alt="Danuka Dissanayake" 
+                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition duration-700"
+                  />
+                </div>
+              </div>
             </div>
-            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter">
-              Meet the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Core Team</span>
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg max-w-xl mx-auto">
-              Three dedicated professionals working hard to make DzD Marketing the best SMM panel.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10 max-w-5xl mx-auto">
-            {team.map((member, index) => (
-              <TeamMember key={index} {...member} />
-            ))}
+
+            {/* Name and title */}
+            <div className="text-left">
+              <p className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+                Danuka Dissanayake
+              </p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                Founder & CEO
+              </p>
+            </div>
           </div>
 
-          {/* Team Message - Redesigned */}
-          <div className="mt-16 text-center max-w-3xl mx-auto relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 rounded-3xl blur-3xl"></div>
-            <div className="relative bg-white dark:bg-[#0f172a] p-8 rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                Founder's Note
-              </div>
-              <Heart size={32} className="text-blue-600 mx-auto mb-4" fill="currentColor" fillOpacity={0.2} />
-              <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-300 italic mb-4 font-medium">
-                "We're not just a team, we're a family. Every customer who trusts us becomes part of our story."
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 p-0.5">
-                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-800 overflow-hidden">
-                    <img src="https://i.pravatar.cc/150?img=8" alt="Danuka" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-black text-slate-900 dark:text-white">Danuka Dissanayake</p>
-                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Founder & CEO</p>
-                </div>
-              </div>
-            </div>
+          {/* Social buttons - EXACTLY as you wanted */}
+          <div className="flex items-center justify-center gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-white/5 w-full max-w-xs mx-auto">
+            <a 
+              href="https://facebook.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-300"
+            >
+              <svg className="w-4 h-4 lg:w-[18px] lg:h-[18px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
+              </svg>
+            </a>
+            <a 
+              href="https://twitter.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-300"
+            >
+              <svg className="w-4 h-4 lg:w-[18px] lg:h-[18px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+              </svg>
+            </a>
+            <a 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-300"
+            >
+              <svg className="w-4 h-4 lg:w-[18px] lg:h-[18px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+              </svg>
+            </a>
+            <a 
+              href="https://linkedin.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-300"
+            >
+              <svg className="w-4 h-4 lg:w-[18px] lg:h-[18px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
           </div>
         </div>
-      </section>
+
+        {/* Bottom decorative elements */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-slate-400 dark:via-white/20 to-transparent"></div>
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border border-slate-200 dark:border-white/10"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-600 to-purple-600 relative overflow-hidden">
