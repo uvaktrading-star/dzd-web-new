@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'; // 👈 Add useLocation
-import PageLoader from './components/PageLoader';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+// Remove PageLoader import
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -21,23 +21,17 @@ import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 
-
-// 👇 Add ScrollToTop component here ,,
-// 👇 Update ScrollToTop component
 function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Scroll window to top
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: 'instant'
     });
     
-    // Also scroll all possible scroll containers
     setTimeout(() => {
-      // Try to find and scroll the main content container
       const mainContent = document.querySelector('main');
       if (mainContent) {
         mainContent.scrollTo({
@@ -46,7 +40,6 @@ function ScrollToTop() {
         });
       }
       
-      // Scroll any element with overflow-y auto
       document.querySelectorAll('.overflow-y-auto, .no-scrollbar').forEach(el => {
         el.scrollTo({
           top: 0,
@@ -64,17 +57,20 @@ function useNavigationLoader(delay = 300) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Show loader when route changes
     setLoading(true);
-
-    // Minimum time loader is visible
     const timer = setTimeout(() => setLoading(false), delay);
-
     return () => clearTimeout(timer);
   }, [location.pathname, delay]);
 
   return loading;
 }
+
+// Create a reusable LoadingSpinner component
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-dark flex items-center justify-center">
+    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -88,10 +84,8 @@ export default function App() {
     setTheme(savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     
-    // Firebase Auth State Listener
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Fetch additional data from Firestore
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           setUser({ uid: firebaseUser.uid, email: firebaseUser.email, ...userDoc.data() });
@@ -107,7 +101,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Lock body scroll when modals are open
   useEffect(() => {
     if (showLogin || showSignup) {
       document.body.classList.add('overflow-hidden');
@@ -143,18 +136,13 @@ export default function App() {
   const openSignup = () => { setShowSignup(true); setShowLogin(false); };
   const closeModals = () => { setShowLogin(false); setShowSignup(false); };
 
-
+  // Use the same LoadingSpinner for initial load
   if (loading) {
-    return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // 👇 wrap your router in a new inner component
   const AppContent = () => {
-    const navigationLoading = useNavigationLoader(500); // ✅ now inside BrowserRouter
+    const navigationLoading = useNavigationLoader(500);
 
     return (
       <>
@@ -169,7 +157,8 @@ export default function App() {
             onSignupClick={openSignup}
           />
 
-          {navigationLoading && <PageLoader />}
+          {/* Show the same blue spinner for navigation loading */}
+          {navigationLoading && <LoadingSpinner />}
 
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
@@ -204,7 +193,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <AppContent /> {/* ✅ navigation loader works here */}
+      <AppContent />
     </BrowserRouter>
   );
 }
