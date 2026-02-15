@@ -12,6 +12,7 @@ import {
   Loader,
   Inbox,
 } from 'lucide-react';
+import { auth } from './firebase'; // Adjust path to your firebase config
 
 interface Ticket {
   id: string;
@@ -22,6 +23,7 @@ interface Ticket {
   createdAt: string;
   userEmail: string;
   userName: string;
+  userId: string;
 }
 
 const priorityColors: Record<string, string> = {
@@ -31,7 +33,7 @@ const priorityColors: Record<string, string> = {
   Urgent: 'text-red-500 bg-red-500/10',
 };
 
-export default function TicketsView({ user }: any) {
+export default function TicketsView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,14 +43,33 @@ export default function TicketsView({ user }: any) {
   });
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Get current user from Firebase
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        setUser({
+          email: currentUser.email,
+          fullName: currentUser.displayName,
+          uid: currentUser.uid,
+          photoURL: currentUser.photoURL
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Load tickets from localStorage on mount
   useEffect(() => {
-    const savedTickets = localStorage.getItem('supportTickets');
-    if (savedTickets) {
-      setTickets(JSON.parse(savedTickets));
+    if (user?.uid) {
+      // Load tickets only for this user
+      const savedTickets = localStorage.getItem(`supportTickets_${user.uid}`);
+      if (savedTickets) {
+        setTickets(JSON.parse(savedTickets));
+      }
     }
-  }, []);
+  }, [user]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -76,6 +97,13 @@ export default function TicketsView({ user }: any) {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Check if user is authenticated
+    if (!user?.email) {
+      alert('You must be logged in to create a ticket');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Send email via API
       const response = await fetch('/api/send-ticket', {
@@ -85,8 +113,9 @@ export default function TicketsView({ user }: any) {
         },
         body: JSON.stringify({
           ...formData,
-          userEmail: user?.email || 'unknown@email.com',
-          userName: user?.fullName || user?.displayName || 'User'
+          userEmail: user.email,
+          userName: user.fullName || user.email.split('@')[0] || 'User',
+          userId: user.uid
         }),
       });
 
@@ -99,14 +128,16 @@ export default function TicketsView({ user }: any) {
           ...formData,
           status: 'Open',
           createdAt: new Date().toISOString(),
-          userEmail: user?.email || 'unknown@email.com',
-          userName: user?.fullName || user?.displayName || 'User'
+          userEmail: user.email,
+          userName: user.fullName || user.email.split('@')[0] || 'User',
+          userId: user.uid
         };
 
-        // Save to localStorage
+        // Save to localStorage with user-specific key
+        const userTicketsKey = `supportTickets_${user.uid}`;
         const updatedTickets = [newTicket, ...tickets];
         setTickets(updatedTickets);
-        localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+        localStorage.setItem(userTicketsKey, JSON.stringify(updatedTickets));
 
         // Show success message
         setShowSuccessMessage(true);
@@ -114,6 +145,8 @@ export default function TicketsView({ user }: any) {
         // Reset form and close modal
         setFormData({ subject: '', priority: 'Medium', description: '' });
         setIsCreateModalOpen(false);
+      } else {
+        alert('Failed to create ticket: ' + (result.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error creating ticket:', error);
@@ -128,17 +161,42 @@ export default function TicketsView({ user }: any) {
     total: tickets.length
   };
 
+  // If user is not logged in, show login message
+  if (!user) {
+    return (
+      <div className="animate-fade-in space-y-8">
+        <div className="text-center py-16">
+          <div className="w-24 h-24 mx-auto bg-slate-100 dark:bg-slate-800/50 rounded-3xl flex items-center justify-center text-slate-400 mb-4">
+            <Ticket size={40} />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+            Please Login
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400">
+            You need to be logged in to create and view support tickets.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-8">
-      {/* Header with CTA */}
+      {/* Header with user info */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Support Tickets
           </h1>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">
-            Customer Support • {user?.fullName || user?.email || 'User'}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+              Customer Support
+            </p>
+            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+            <p className="text-blue-600 font-black text-[10px] uppercase tracking-widest">
+              {user.fullName || user.email}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
@@ -154,7 +212,7 @@ export default function TicketsView({ user }: any) {
           <CheckCircle size={24} />
           <div>
             <p className="font-black text-sm">Ticket Created Successfully!</p>
-            <p className="text-xs opacity-80 mt-1">Our team will contact you via email shortly.</p>
+            <p className="text-xs opacity-80 mt-1">Our team will contact you at {user.email} shortly.</p>
           </div>
           <button 
             onClick={() => setShowSuccessMessage(false)}
@@ -325,17 +383,28 @@ export default function TicketsView({ user }: any) {
                   />
                 </div>
                 
-                {/* User info preview */}
-                <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                    From:
+                {/* User info preview - Now showing actual Firebase data */}
+                <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/30">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">
+                    Submitting as:
                   </p>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">
-                    {user?.fullName || user?.displayName || 'User'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {user?.email || 'No email provided'}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    {user.photoURL && (
+                      <img 
+                        src={user.photoURL} 
+                        alt={user.fullName}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <div>
+                      <p className="text-sm font-black text-slate-900 dark:text-white">
+                        {user.fullName || user.email.split('@')[0]}
+                      </p>
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
