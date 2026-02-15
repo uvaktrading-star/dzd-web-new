@@ -49,6 +49,7 @@ Try asking me about:
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const chatToggleRef = useRef<HTMLButtonElement>(null);
+  const responseContainerRef = useRef<HTMLDivElement>(null);
 
   const API_ENDPOINT = "https://chat-widget-blue.vercel.app/api/chat";
   const CONVERSATION_KEY = 'dzd_chat_history';
@@ -78,10 +79,13 @@ Try asking me about:
     }
   }, [messages]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change - with smooth behavior
   useEffect(() => {
     if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+      chatMessagesRef.current.scrollTo({
+        top: chatMessagesRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages, showTyping]);
 
@@ -117,6 +121,19 @@ Try asking me about:
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
+
+  // Prevent body scroll when chat is open on mobile
+  useEffect(() => {
+    if (isOpen && window.innerWidth <= 640) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   const toggleChat = (e?: React.MouseEvent) => {
@@ -280,15 +297,44 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         )}
       </button>
 
-      {/* Chat Window */}
+      {/* Chat Window - Desktop & Mobile Responsive */}
       <div
         ref={chatWindowRef}
-        className={`absolute bottom-16 right-0 w-[380px] md:w-[450px] h-[650px] bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 origin-bottom-right ${
-          isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'
-        }`}
+        className={`
+          absolute bottom-16 right-0
+          bg-white dark:bg-[#0f172a] 
+          rounded-2xl border border-slate-200 dark:border-white/10 
+          shadow-2xl flex flex-col 
+          transition-all duration-200 origin-bottom-right
+          overflow-hidden
+          
+          /* Desktop styles */
+          w-[380px] md:w-[450px] h-[650px]
+          
+          /* Mobile fullscreen styles */
+          sm:max-w-none
+          
+          ${isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'}
+          
+          /* Mobile fullscreen */
+          @media (max-width: 640px) {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            bottom: 0 !important;
+            right: 0 !important;
+          }
+        `}
       >
         {/* Chat Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
@@ -316,18 +362,30 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
             </button>
             <button
               onClick={toggleChat}
-              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors md:flex hidden"
             >
               <ChevronDown size={18} />
+            </button>
+            {/* Mobile close button */}
+            <button
+              onClick={toggleChat}
+              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors md:hidden"
+            >
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Chat Messages */}
+        {/* Chat Messages - Fixed height container */}
         <div
           ref={chatMessagesRef}
           className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: '#3b82f6 #e2e8f0' }}
+          style={{ 
+            scrollbarWidth: 'thin', 
+            scrollbarColor: '#3b82f6 #e2e8f0',
+            height: 'calc(100% - 180px)', // Fixed height calculation
+            maxHeight: 'calc(100% - 180px)'
+          }}
         >
           {messages.map((msg, index) => (
             <div
@@ -335,19 +393,29 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex items-start gap-2 max-w-[90%]">
+                <div className="flex items-start gap-2 max-w-full sm:max-w-[90%]">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
                     <Bot size={14} />
                   </div>
-                  <div className="flex flex-col gap-1 flex-1">
+                  <div className="flex flex-col gap-1 flex-1 min-w-0"> {/* min-w-0 prevents overflow */}
                     <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                       AI Assistant
                     </span>
-                    <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
+                    <div 
+                      ref={responseContainerRef}
+                      className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-y-auto"
+                      style={{
+                        maxHeight: '400px', // Fixed max height for responses
+                        height: 'auto',
+                        minHeight: '60px'
+                      }}
+                    >
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeRaw]}
                         components={{
+                          // ... (keep all your existing markdown components)
+                          
                           // Headers
                           h1: ({ node, ...props }) => (
                             <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-white/10" {...props} />
@@ -364,7 +432,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                           
                           // Paragraphs
                           p: ({ node, ...props }) => (
-                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3 last:mb-0" {...props} />
+                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3 last:mb-0 break-words" {...props} />
                           ),
                           
                           // Text formatting
@@ -377,13 +445,13 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                           
                           // Lists
                           ul: ({ node, ...props }) => (
-                            <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300" {...props} />
+                            <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           ol: ({ node, ...props }) => (
-                            <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300" {...props} />
+                            <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           li: ({ node, ...props }) => (
-                            <li className="text-sm leading-relaxed pl-1 marker:text-blue-600" {...props} />
+                            <li className="text-sm leading-relaxed pl-1 marker:text-blue-600 break-words" {...props} />
                           ),
                           
                           // Tables
@@ -405,7 +473,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                             <th className="px-3 py-2 text-left text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400" {...props} />
+                            <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 break-words" {...props} />
                           ),
                           
                           // Code blocks
@@ -418,7 +486,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                                 </code>
                               </pre>
                             ) : (
-                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md text-xs font-mono" {...props}>
+                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md text-xs font-mono break-words" {...props}>
                                 {children}
                               </code>
                             );
@@ -429,12 +497,12 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                           
                           // Blockquotes
                           blockquote: ({ node, ...props }) => (
-                            <blockquote className="border-l-4 border-blue-600 pl-4 py-1 my-3 text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-xl" {...props} />
+                            <blockquote className="border-l-4 border-blue-600 pl-4 py-1 my-3 text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-xl break-words" {...props} />
                           ),
                           
                           // Links
                           a: ({ node, ...props }) => (
-                            <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer" {...props}>
+                            <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1 break-words" target="_blank" rel="noopener noreferrer" {...props}>
                               {props.children} <LinkIcon size={12} />
                             </a>
                           ),
@@ -457,7 +525,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                 </div>
               )}
               {msg.role === 'user' && (
-                <div className="flex flex-col gap-1 items-end max-w-[80%]">
+                <div className="flex flex-col gap-1 items-end max-w-[80%] sm:max-w-[70%]">
                   <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
                     You
                   </span>
@@ -487,7 +555,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         </div>
 
         {/* Quick Actions */}
-        <div className="px-4 py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5">
+        <div className="px-4 py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => handleQuickAction('code')}
@@ -517,7 +585,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5">
+        <div className="p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="relative flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -552,6 +620,18 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           </div>
         </div>
       </div>
+
+      {/* Add global styles for mobile */}
+      <style jsx global>{`
+        @media (max-width: 640px) {
+          body.chat-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }
