@@ -289,7 +289,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         )}
       </button>
 
-      {/* Chat Window - Fullscreen on Mobile, Fixed on Desktop */}
+      {/* Chat Window - Premium Layout */}
       <div
         ref={chatWindowRef}
         className={`
@@ -305,7 +305,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           
           /* Mobile Fullscreen */
           sm:w-[380px] sm:h-[650px] sm:rounded-2xl
-          max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:h-screen max-sm:rounded-none max-sm:bottom-0 max-sm:right-0 max-sm:left-0 max-sm:top-0
+          max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:h-screen max-sm:rounded-none
           
           ${isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'}
         `}
@@ -346,14 +346,10 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           </div>
         </div>
 
-        {/* Chat Messages */}
+        {/* Chat Messages - No scrollbars on individual responses */}
         <div
           ref={chatMessagesRef}
-          className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
-          style={{ 
-            scrollbarWidth: 'thin', 
-            scrollbarColor: '#3b82f6 #e2e8f0',
-          }}
+          className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 bg-slate-50 dark:bg-[#020617] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-slate-200 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-slate-800"
         >
           {messages.map((msg, index) => (
             <div
@@ -361,7 +357,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex items-start gap-1.5 sm:gap-2 max-w-[95%] sm:max-w-[90%]">
+                <div className="flex items-start gap-1.5 sm:gap-2 w-full sm:max-w-[90%]">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
                     <Bot size={12} className="sm:w-3.5 sm:h-3.5" />
                   </div>
@@ -369,30 +365,23 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                     <span className="text-[8px] sm:text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                       AI Assistant
                     </span>
-                    <div 
-                      className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-3 sm:p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-y-auto"
-                      style={{
-                        maxHeight: '70vh',
-                        height: 'auto',
-                        minHeight: '40px',
-                      }}
-                    >
+                    <div className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-3 sm:p-4 shadow-sm border border-slate-200 dark:border-white/5">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeRaw]}
                         components={{
                           // Headers
                           h1: ({ node, ...props }) => (
-                            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-3 mb-2 pb-1 border-b border-slate-200 dark:border-white/10" {...props} />
+                            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-3 mb-2 pb-1 border-b border-slate-200 dark:border-white/10 break-words" {...props} />
                           ),
                           h2: ({ node, ...props }) => (
-                            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-3 mb-2" {...props} />
+                            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-3 mb-2 break-words" {...props} />
                           ),
                           h3: ({ node, ...props }) => (
-                            <h3 className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 mt-2 mb-1" {...props} />
+                            <h3 className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 mt-2 mb-1 break-words" {...props} />
                           ),
                           h4: ({ node, ...props }) => (
-                            <h4 className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider" {...props} />
+                            <h4 className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider break-words" {...props} />
                           ),
                           
                           // Paragraphs
@@ -402,24 +391,24 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                           
                           // Text formatting
                           strong: ({ node, ...props }) => (
-                            <strong className="font-black text-blue-600 dark:text-blue-400" {...props} />
+                            <strong className="font-black text-blue-600 dark:text-blue-400 break-words" {...props} />
                           ),
                           em: ({ node, ...props }) => (
-                            <em className="italic text-slate-700 dark:text-slate-300" {...props} />
+                            <em className="italic text-slate-700 dark:text-slate-300 break-words" {...props} />
                           ),
                           
-                          // Lists - with left margin for proper indentation
+                          // Lists - Properly wrapped
                           ul: ({ node, ...props }) => (
-                            <ul className="list-disc list-outside ml-3 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+                            <ul className="list-disc list-inside sm:list-outside ml-0 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           ol: ({ node, ...props }) => (
-                            <ol className="list-decimal list-outside ml-3 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+                            <ol className="list-decimal list-inside sm:list-outside ml-0 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           li: ({ node, ...props }) => (
-                            <li className="text-xs sm:text-sm leading-relaxed pl-0.5 marker:text-blue-600 break-words" {...props} />
+                            <li className="text-xs sm:text-sm leading-relaxed break-words marker:text-blue-600" {...props} />
                           ),
                           
-                          // Tables - with horizontal scroll but no overflow
+                          // Tables - With horizontal scroll only when necessary
                           table: ({ node, ...props }) => (
                             <div className="overflow-x-auto my-2 sm:my-3 rounded-lg sm:rounded-xl border border-slate-200 dark:border-white/10">
                               <table className="w-full text-xs sm:text-sm divide-y divide-slate-200 dark:divide-white/10" {...props} />
@@ -435,17 +424,17 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                             <tr className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" {...props} />
                           ),
                           th: ({ node, ...props }) => (
-                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props} />
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-normal break-words" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 break-words" {...props} />
+                            <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 whitespace-normal break-words" {...props} />
                           ),
                           
-                          // Code blocks
+                          // Code blocks - Properly wrapped
                           code: ({ node, inline, className, children, ...props }) => {
                             const match = /language-(\w+)/.exec(className || '');
                             return !inline ? (
-                              <pre className="bg-slate-100 dark:bg-slate-800/50 p-2 sm:p-3 rounded-lg sm:rounded-xl overflow-x-auto my-2 border border-slate-200 dark:border-white/5">
+                              <pre className="bg-slate-100 dark:bg-slate-800/50 p-2 sm:p-3 rounded-lg sm:rounded-xl my-2 border border-slate-200 dark:border-white/5 overflow-x-auto">
                                 <code className="text-[10px] sm:text-xs font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words" {...props}>
                                   {children}
                                 </code>
@@ -468,7 +457,7 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                           // Links
                           a: ({ node, ...props }) => (
                             <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-0.5 sm:gap-1 break-words" target="_blank" rel="noopener noreferrer" {...props}>
-                              {props.children} <LinkIcon size={10} className="sm:w-3 sm:h-3" />
+                              {props.children} <LinkIcon size={10} className="sm:w-3 sm:h-3 shrink-0" />
                             </a>
                           ),
                           
@@ -585,6 +574,67 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           </div>
         </div>
       </div>
+
+      {/* Add custom scrollbar styles */}
+      <style jsx global>{`
+        /* Custom scrollbar for the main chat container */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: #e2e8f0;
+          border-radius: 8px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #3b82f6;
+          border-radius: 8px;
+        }
+        
+        .dark .scrollbar-thin::-webkit-scrollbar-track {
+          background: #1e293b;
+        }
+        
+        .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #60a5fa;
+        }
+        
+        /* Hide scrollbars on individual response containers */
+        .prose {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .prose::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Ensure proper text wrapping */
+        .break-words {
+          word-break: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
+        }
+        
+        /* Table cell text wrapping */
+        td, th {
+          word-break: break-word;
+          overflow-wrap: break-word;
+        }
+        
+        /* List item wrapping */
+        li {
+          word-break: break-word;
+          overflow-wrap: break-word;
+        }
+        
+        /* Code block wrapping */
+        pre code {
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+      `}</style>
     </div>
   );
 }
