@@ -18,6 +18,8 @@ import WalletPage from './wallet/BillingPageView';
 import ContactPage from './Contact';
 import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
+import AIChatWidget from './AIChatWidget';
+
 
 // 👇 Add ScrollToTop component here ,,
 // 👇 Update ScrollToTop component
@@ -161,6 +163,7 @@ export default function App() {
             <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
           </Routes>
         </main>
+        <AIChatWidget />
 
         {/* Modals Overlays */}
         {showLogin && (
