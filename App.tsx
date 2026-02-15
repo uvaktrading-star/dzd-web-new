@@ -18,7 +18,7 @@ import WalletPage from './wallet/BillingPageView';
 import ContactPage from './Contact';
 import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
-import AIChatWidget from './AIChatWidget';
+import AIChatWidget from './AiChatWidget';
 
 
 // 👇 Add ScrollToTop component here ,,
