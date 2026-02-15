@@ -14,9 +14,6 @@ import {
   ChevronDown,
   Trash2,
   Zap,
-  List,
-  ListOrdered,
-  Quote,
   Link as LinkIcon
 } from 'lucide-react';
 
@@ -49,11 +46,9 @@ Try asking me about:
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const chatToggleRef = useRef<HTMLButtonElement>(null);
-  const responseContainerRef = useRef<HTMLDivElement>(null);
 
   const API_ENDPOINT = "https://chat-widget-blue.vercel.app/api/chat";
   const CONVERSATION_KEY = 'dzd_chat_history';
-  const MAX_HISTORY_LENGTH = 20;
 
   // Load saved conversation
   useEffect(() => {
@@ -79,13 +74,10 @@ Try asking me about:
     }
   }, [messages]);
 
-  // Scroll to bottom when messages change - with smooth behavior
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTo({
-        top: chatMessagesRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
   }, [messages, showTyping]);
 
@@ -125,14 +117,14 @@ Try asking me about:
 
   // Prevent body scroll when chat is open on mobile
   useEffect(() => {
-    if (isOpen && window.innerWidth <= 640) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
     }
     
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
 
@@ -297,57 +289,42 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         )}
       </button>
 
-      {/* Chat Window - Desktop & Mobile Responsive */}
+      {/* Chat Window - Fullscreen on Mobile, Fixed on Desktop */}
       <div
         ref={chatWindowRef}
         className={`
           absolute bottom-16 right-0
           bg-white dark:bg-[#0f172a] 
-          rounded-2xl border border-slate-200 dark:border-white/10 
+          border border-slate-200 dark:border-white/10 
           shadow-2xl flex flex-col 
           transition-all duration-200 origin-bottom-right
           overflow-hidden
           
           /* Desktop styles */
-          w-[380px] md:w-[450px] h-[650px]
+          w-[380px] md:w-[450px] h-[650px] rounded-2xl
           
-          /* Mobile fullscreen styles */
-          sm:max-w-none
+          /* Mobile Fullscreen */
+          sm:w-[380px] sm:h-[650px] sm:rounded-2xl
+          max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:h-screen max-sm:rounded-none max-sm:bottom-0 max-sm:right-0 max-sm:left-0 max-sm:top-0
           
           ${isOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-0 pointer-events-none'}
-          
-          /* Mobile fullscreen */
-          @media (max-width: 640px) {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            border-radius: 0 !important;
-            bottom: 0 !important;
-            right: 0 !important;
-          }
         `}
       >
         {/* Chat Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between text-white shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 sm:px-4 sm:py-4 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
-                <Bot size={20} />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
+                <Bot size={16} className="sm:w-5 sm:h-5" />
               </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
+              <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
             </div>
             <div>
-              <h3 className="font-black text-sm uppercase tracking-wider flex items-center gap-1">
-                AI Assistant <Sparkles size={12} className="text-yellow-300" />
+              <h3 className="font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1">
+                AI Assistant <Sparkles size={10} className="sm:w-3 sm:h-3 text-yellow-300" />
               </h3>
-              <p className="text-[10px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              <p className="text-[8px] sm:text-[10px] font-bold text-white/80 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-400 rounded-full"></span>
                 Online • DzD Marketing
               </p>
             </div>
@@ -355,36 +332,27 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
           <div className="flex items-center gap-1">
             <button
               onClick={clearChatHistory}
-              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
               title="Clear chat"
             >
-              <Trash2 size={16} />
+              <Trash2 size={14} className="sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={toggleChat}
-              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors md:flex hidden"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
             >
-              <ChevronDown size={18} />
-            </button>
-            {/* Mobile close button */}
-            <button
-              onClick={toggleChat}
-              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors md:hidden"
-            >
-              <X size={18} />
+              <X size={14} className="sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
 
-        {/* Chat Messages - Fixed height container */}
+        {/* Chat Messages */}
         <div
           ref={chatMessagesRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
+          className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 bg-slate-50 dark:bg-[#020617]"
           style={{ 
             scrollbarWidth: 'thin', 
             scrollbarColor: '#3b82f6 #e2e8f0',
-            height: 'calc(100% - 180px)', // Fixed height calculation
-            maxHeight: 'calc(100% - 180px)'
           }}
         >
           {messages.map((msg, index) => (
@@ -393,46 +361,43 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex items-start gap-2 max-w-full sm:max-w-[90%]">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
-                    <Bot size={14} />
+                <div className="flex items-start gap-1.5 sm:gap-2 max-w-[95%] sm:max-w-[90%]">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                    <Bot size={12} className="sm:w-3.5 sm:h-3.5" />
                   </div>
-                  <div className="flex flex-col gap-1 flex-1 min-w-0"> {/* min-w-0 prevents overflow */}
-                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <span className="text-[8px] sm:text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider ml-1">
                       AI Assistant
                     </span>
                     <div 
-                      ref={responseContainerRef}
-                      className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-y-auto"
+                      className="prose prose-sm dark:prose-invert max-w-none bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-3 sm:p-4 shadow-sm border border-slate-200 dark:border-white/5 overflow-y-auto"
                       style={{
-                        maxHeight: '400px', // Fixed max height for responses
+                        maxHeight: '70vh',
                         height: 'auto',
-                        minHeight: '60px'
+                        minHeight: '40px',
                       }}
                     >
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeRaw]}
                         components={{
-                          // ... (keep all your existing markdown components)
-                          
                           // Headers
                           h1: ({ node, ...props }) => (
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-white/10" {...props} />
+                            <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-3 mb-2 pb-1 border-b border-slate-200 dark:border-white/10" {...props} />
                           ),
                           h2: ({ node, ...props }) => (
-                            <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 mb-2" {...props} />
+                            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-3 mb-2" {...props} />
                           ),
                           h3: ({ node, ...props }) => (
-                            <h3 className="text-base font-black text-blue-600 dark:text-blue-400 mt-3 mb-1" {...props} />
+                            <h3 className="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 mt-2 mb-1" {...props} />
                           ),
                           h4: ({ node, ...props }) => (
-                            <h4 className="text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider" {...props} />
+                            <h4 className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 mt-2 mb-1 uppercase tracking-wider" {...props} />
                           ),
                           
                           // Paragraphs
                           p: ({ node, ...props }) => (
-                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3 last:mb-0 break-words" {...props} />
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-2 last:mb-0 break-words" {...props} />
                           ),
                           
                           // Text formatting
@@ -443,21 +408,21 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                             <em className="italic text-slate-700 dark:text-slate-300" {...props} />
                           ),
                           
-                          // Lists
+                          // Lists - with left margin for proper indentation
                           ul: ({ node, ...props }) => (
-                            <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+                            <ul className="list-disc list-outside ml-3 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           ol: ({ node, ...props }) => (
-                            <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
+                            <ol className="list-decimal list-outside ml-3 sm:ml-4 mb-2 space-y-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 break-words" {...props} />
                           ),
                           li: ({ node, ...props }) => (
-                            <li className="text-sm leading-relaxed pl-1 marker:text-blue-600 break-words" {...props} />
+                            <li className="text-xs sm:text-sm leading-relaxed pl-0.5 marker:text-blue-600 break-words" {...props} />
                           ),
                           
-                          // Tables
+                          // Tables - with horizontal scroll but no overflow
                           table: ({ node, ...props }) => (
-                            <div className="overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-white/10">
-                              <table className="w-full text-sm divide-y divide-slate-200 dark:divide-white/10" {...props} />
+                            <div className="overflow-x-auto my-2 sm:my-3 rounded-lg sm:rounded-xl border border-slate-200 dark:border-white/10">
+                              <table className="w-full text-xs sm:text-sm divide-y divide-slate-200 dark:divide-white/10" {...props} />
                             </div>
                           ),
                           thead: ({ node, ...props }) => (
@@ -470,51 +435,51 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                             <tr className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" {...props} />
                           ),
                           th: ({ node, ...props }) => (
-                            <th className="px-3 py-2 text-left text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props} />
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 break-words" {...props} />
+                            <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 break-words" {...props} />
                           ),
                           
                           // Code blocks
                           code: ({ node, inline, className, children, ...props }) => {
                             const match = /language-(\w+)/.exec(className || '');
                             return !inline ? (
-                              <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5">
-                                <code className="text-xs font-mono text-slate-800 dark:text-slate-200" {...props}>
+                              <pre className="bg-slate-100 dark:bg-slate-800/50 p-2 sm:p-3 rounded-lg sm:rounded-xl overflow-x-auto my-2 border border-slate-200 dark:border-white/5">
+                                <code className="text-[10px] sm:text-xs font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words" {...props}>
                                   {children}
                                 </code>
                               </pre>
                             ) : (
-                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-md text-xs font-mono break-words" {...props}>
+                              <code className="bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-1 py-0.5 rounded text-[10px] sm:text-xs font-mono break-words" {...props}>
                                 {children}
                               </code>
                             );
                           },
                           pre: ({ node, ...props }) => (
-                            <pre className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl overflow-x-auto my-3 border border-slate-200 dark:border-white/5 text-xs font-mono" {...props} />
+                            <pre className="bg-slate-100 dark:bg-slate-800/50 p-2 sm:p-3 rounded-lg sm:rounded-xl overflow-x-auto my-2 border border-slate-200 dark:border-white/5 text-[10px] sm:text-xs font-mono whitespace-pre-wrap break-words" {...props} />
                           ),
                           
                           // Blockquotes
                           blockquote: ({ node, ...props }) => (
-                            <blockquote className="border-l-4 border-blue-600 pl-4 py-1 my-3 text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-xl break-words" {...props} />
+                            <blockquote className="border-l-4 border-blue-600 pl-3 sm:pl-4 py-1 my-2 text-xs sm:text-sm italic text-slate-600 dark:text-slate-400 bg-blue-50 dark:bg-blue-950/30 rounded-r-lg sm:rounded-r-xl break-words" {...props} />
                           ),
                           
                           // Links
                           a: ({ node, ...props }) => (
-                            <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-1 break-words" target="_blank" rel="noopener noreferrer" {...props}>
-                              {props.children} <LinkIcon size={12} />
+                            <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-0.5 sm:gap-1 break-words" target="_blank" rel="noopener noreferrer" {...props}>
+                              {props.children} <LinkIcon size={10} className="sm:w-3 sm:h-3" />
                             </a>
                           ),
                           
                           // Horizontal rule
                           hr: ({ node, ...props }) => (
-                            <hr className="my-4 border-t border-slate-200 dark:border-white/10" {...props} />
+                            <hr className="my-3 border-t border-slate-200 dark:border-white/10" {...props} />
                           ),
                           
                           // Line breaks
                           br: ({ node, ...props }) => (
-                            <br className="mb-2" {...props} />
+                            <br className="mb-1" {...props} />
                           ),
                         }}
                       >
@@ -525,12 +490,12 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                 </div>
               )}
               {msg.role === 'user' && (
-                <div className="flex flex-col gap-1 items-end max-w-[80%] sm:max-w-[70%]">
-                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
+                <div className="flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[75%]">
+                  <span className="text-[8px] sm:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-1">
                     You
                   </span>
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl rounded-br-none p-3 shadow-lg">
-                    <p className="text-sm text-white whitespace-pre-wrap break-words">{msg.content}</p>
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl rounded-br-none px-3 py-2 sm:px-4 sm:py-3 shadow-lg">
+                    <p className="text-xs sm:text-sm text-white whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
                 </div>
               )}
@@ -539,15 +504,15 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
 
           {/* Typing Indicator */}
           {showTyping && (
-            <div className="flex items-start gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg">
-                <Bot size={14} />
+            <div className="flex items-start gap-1.5 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                <Bot size={12} className="sm:w-3.5 sm:h-3.5" />
               </div>
-              <div className="bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-200 dark:border-white/5">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="bg-white dark:bg-[#0f172a] rounded-2xl rounded-tl-none p-3 sm:p-4 shadow-sm border border-slate-200 dark:border-white/5">
+                <div className="flex gap-1 sm:gap-1.5">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -555,37 +520,37 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
         </div>
 
         {/* Quick Actions */}
-        <div className="px-4 py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <button
               onClick={() => handleQuickAction('code')}
-              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+              className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 sm:gap-1.5"
             >
-              <Code size={12} /> Code Help
+              <Code size={10} className="sm:w-3 sm:h-3" /> Code
             </button>
             <button
               onClick={() => handleQuickAction('write')}
-              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+              className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 sm:gap-1.5"
             >
-              <PenTool size={12} /> Writing
+              <PenTool size={10} className="sm:w-3 sm:h-3" /> Write
             </button>
             <button
               onClick={() => handleQuickAction('explain')}
-              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1.5"
+              className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 sm:gap-1.5"
             >
-              <HelpCircle size={12} /> Explain
+              <HelpCircle size={10} className="sm:w-3 sm:h-3" /> Explain
             </button>
             <button
               onClick={clearChatHistory}
-              className="h-8 px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1.5 ml-auto"
+              className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 sm:gap-1.5 ml-auto"
             >
-              <Trash2 size={12} /> Clear
+              <Trash2 size={10} className="sm:w-3 sm:h-3" /> Clear
             </button>
           </div>
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
+        <div className="p-3 sm:p-4 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-white/5 shrink-0">
           <div className="relative flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -598,40 +563,28 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
                 rows={1}
-                className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none max-h-32"
+                className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-3 sm:pl-4 pr-10 sm:pr-12 py-2 sm:py-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none max-h-32"
                 disabled={isStreaming}
               />
               <button
                 onClick={sendMessage}
                 disabled={isStreaming || !inputValue.trim()}
-                className="absolute right-2 bottom-2 w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                className="absolute right-1.5 sm:right-2 bottom-1.5 sm:bottom-2 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
-                <Send size={14} />
+                <Send size={12} className="sm:w-3.5 sm:h-3.5" />
               </button>
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Zap size={10} className="text-blue-600" /> Powered by DzD AI Labs
+          <div className="mt-1.5 sm:mt-2 flex items-center justify-between">
+            <p className="text-[6px] sm:text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-0.5 sm:gap-1">
+              <Zap size={8} className="sm:w-2.5 sm:h-2.5 text-blue-600" /> Powered by DzD AI Labs
             </p>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">
+            <p className="text-[6px] sm:text-[8px] font-black text-slate-400 uppercase tracking-wider">
               Shift + Enter
             </p>
           </div>
         </div>
       </div>
-
-      {/* Add global styles for mobile */}
-      <style jsx global>{`
-        @media (max-width: 640px) {
-          body.chat-open {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 }
