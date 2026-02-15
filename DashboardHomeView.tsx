@@ -270,7 +270,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
             {ticketCount}
           </h3>
           <button 
-            onClick={() => setActiveTab && setActiveTab('tickets')}
+            onClick={() => handleNavigation('/dashboard/tickets')} 
             className="text-[8px] sm:text-[9px] font-bold text-orange-500 hover:text-orange-600 mt-1 flex items-center gap-1"
           >
             View Tickets <PlusCircle size={10} />
@@ -291,7 +291,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
               )}
             </div>
             <button 
-              onClick={() => setActiveTab && setActiveTab('orders')}
+              onClick={() => handleNavigation('/dashboard/orders')} 
               className="text-[8px] sm:text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline flex items-center gap-1"
             >
               Full Log <PlusCircle size={12} />
