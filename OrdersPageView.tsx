@@ -34,8 +34,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Exchange rate API
-const EXCHANGE_API = process.env.NEXT_PUBLIC_EXCHANGE_API;
-const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL;
+const EXCHANGE_API = import.meta.env.VITE_EXCHANGE_API;
+const WORKER_URL = import.meta.env.VITE_WORKER_URL;
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 // Order status badge component
