@@ -49,6 +49,47 @@ Try asking me about:
 
   const API_ENDPOINT = "https://chat-widget-blue.vercel.app/api/chat";
   const CONVERSATION_KEY = 'dzd_chat_history';
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+const [isDragging, setIsDragging] = useState(false);
+const dragRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+  const button = dragRef.current;
+  if (!button) return;
+
+  let startX = 0;
+  let startY = 0;
+
+  const handleTouchStart = (e: TouchEvent) => {
+    setIsDragging(true);
+    startX = e.touches[0].clientX - position.x;
+    startY = e.touches[0].clientY - position.y;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging) return;
+
+    const newX = e.touches[0].clientX - startX;
+    const newY = e.touches[0].clientY - startY;
+
+    setPosition({ x: newX, y: newY });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  button.addEventListener("touchstart", handleTouchStart);
+  window.addEventListener("touchmove", handleTouchMove);
+  window.addEventListener("touchend", handleTouchEnd);
+
+  return () => {
+    button.removeEventListener("touchstart", handleTouchStart);
+    window.removeEventListener("touchmove", handleTouchMove);
+    window.removeEventListener("touchend", handleTouchEnd);
+  };
+}, [isDragging, position]);
+
 
   // Load saved conversation
   useEffect(() => {
@@ -272,22 +313,36 @@ Error: ${error instanceof Error ? error.message : 'Unknown error'}
   };
 
   return (
-    <div id="aiChatWidget" className="fixed bottom-6 right-6 z-[9999]">
-      {/* Chat Toggle Button */}
-      <button
-        ref={chatToggleRef}
-        onClick={toggleChat}
-        className="group relative w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300 hover:shadow-blue-600/30"
-      >
-        {isOpen ? (
-          <X size={24} className="absolute transition-all duration-300" />
-        ) : (
-          <>
-            <MessageCircle size={24} className="absolute transition-all duration-300 group-hover:scale-110" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></span>
-          </>
-        )}
-      </button>
+    <div
+  id="aiChatWidget"
+  className="fixed z-[9999]"
+  style={{
+    bottom: position.y === 0 ? "24px" : "auto",
+    right: position.x === 0 ? "24px" : "auto",
+    transform: `translate(${position.x}px, ${position.y}px)`
+  }}
+>
+
+{/* Chat Toggle Button */}
+<button
+  ref={dragRef}
+  onClick={() => {
+    if (!isDragging) {
+      toggleChat();
+    }
+  }}
+  className="group relative w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300 hover:shadow-blue-600/30 touch-none"
+>
+  {isOpen ? (
+    <X size={24} className="absolute transition-all duration-300" />
+  ) : (
+    <>
+      <MessageCircle size={24} className="absolute transition-all duration-300 group-hover:scale-110" />
+      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse"></span>
+    </>
+  )}
+</button>
+
 
       {/* Chat Window - Premium Layout */}
       <div
