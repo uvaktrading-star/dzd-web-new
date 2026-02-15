@@ -111,7 +111,7 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/services')} 
+                  onClick={() => handleNavigation('/dashboard/services')} 
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Services
@@ -133,14 +133,6 @@ export default function Footer() {
                   Dashboard
                 </button>
               </li>
-              <li>
-                <button 
-                  onClick={() => handleNavigation('/api-docs')} 
-                  className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
-                >
-                  API Docs
-                </button>
-              </li>
             </ul>
           </div>
           
@@ -150,7 +142,7 @@ export default function Footer() {
             <ul className="space-y-2 lg:space-y-3">
               <li>
                 <button 
-                  onClick={() => handleNavigation('/help')} 
+                  onClick={() => handleNavigation('/support')} 
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Help Center
@@ -166,26 +158,10 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => handleNavigation('/terms')} 
+                  onClick={() => handleNavigation('/terms-of-service')} 
                   className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
                 >
                   Terms of Service
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleNavigation('/privacy')} 
-                  className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
-                >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleNavigation('/refund')} 
-                  className="text-slate-500 dark:text-slate-400 text-sm lg:text-base hover:text-blue-600 transition-colors"
-                >
-                  Refund Policy
                 </button>
               </li>
             </ul>
@@ -234,7 +210,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-6 lg:pt-8 mt-6 lg:mt-8 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 order-2 md:order-1">
-            © 2026 DzD Marketing. All rights reserved. | Designed for scale
+            © 2025n DzD Marketing. All rights reserved. | Designed for scale
           </p>
           <div className="flex items-center gap-4 order-1 md:order-2">
             <span className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-wider">v2.0.0</span>
