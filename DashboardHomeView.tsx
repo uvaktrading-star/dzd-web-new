@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle, Wallet, History, Mail, Zap, ListOrderedIcon, Loader } from 'lucide-react';
 import { auth, db } from './firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const WORKER_URL = "https://dzd-billing-api.sitewasd2026.workers.dev";
 
 export default function DashboardHomeView({ user, setActiveTab }: any) {
+    const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
   const [userBalance, setUserBalance] = useState("0.00");
   const [orderStats, setOrderStats] = useState({
     total: 0,
@@ -177,7 +183,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
         </div>
         
         <button 
-          onClick={() => setActiveTab && setActiveTab('services')}
+          onClick={() => handleNavigation('/dashboard/orders')} 
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 text-xs sm:text-sm hover:scale-105 active:scale-95 transition-all"
         >
           <PlusCircle size={16} className="sm:w-[18px] sm:h-[18px]" /> 
@@ -348,7 +354,7 @@ export default function DashboardHomeView({ user, setActiveTab }: any) {
                 Deploy your first mission to get started
               </p>
               <button 
-                onClick={() => setActiveTab && setActiveTab('services')}
+                onClick={() => handleNavigation('/dashboard/orders')} 
                 className="mt-4 sm:mt-6 flex items-center gap-2 mx-auto bg-blue-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-[10px] sm:text-xs hover:scale-105 transition-all"
               >
                 <PlusCircle size={12} className="sm:w-[14px] sm:h-[14px]" />
