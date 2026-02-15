@@ -79,7 +79,7 @@ export default function TicketsView({ user }: any) {
 
     try {
       // Send email via API
-      const response = await fetch('https://dzd-web.vercel.app/api/send-ticket', {
+      const response = await fetch('/api/send-ticket', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
