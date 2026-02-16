@@ -7,7 +7,8 @@ import {
   CheckCircle2, 
   Loader2,
   Heart,
-  UserPlus
+  UserPlus,
+  Wallet
 } from 'lucide-react';
 
 interface WhatsAppBoostProps {
@@ -30,13 +31,10 @@ export default function WhatsAppBoostView({
   const [type, setType] = useState<'follow' | 'react'>('follow');
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  // --- CONFIGURATION ---
-  // ඔයාගේ Heroku App URL එක මෙතනට දාන්න
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
   const handleExecute = async () => {
-    // 1. Link Validation
     if (!link.includes('whatsapp.com/channel/')) {
       setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_CHANNEL_LINK' });
       return;
@@ -45,7 +43,6 @@ export default function WhatsAppBoostView({
     const cost = type === 'follow' ? 35 : 5;
     const balance = parseFloat(userBalance?.total_balance || '0');
 
-    // 2. Balance Check
     if (balance < cost) {
       setStatus({ type: 'error', msg: 'INSUFFICIENT_CREDITS_IN_CORE' });
       return;
@@ -55,7 +52,6 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // STEP 1: Cloudflare Worker එක හරහා මුදල් කපා ගැනීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,16 +65,14 @@ export default function WhatsAppBoostView({
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        
-        // STEP 2: මුදල් කැපීම සාර්ථක නම් Heroku Bot එකට Signal එක යැවීම
         const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            key: BOT_AUTH_KEY, // Bot එකේ තියෙන key එකම විය යුතුය
-            type: type,        // 'follow' හෝ 'react'
+            key: BOT_AUTH_KEY,
+            type: type,
             link: link.trim(),
-            emojis: ["❤️", "🔥", "👍", "✨", "💙"] // Reactions සඳහා emojis
+            emojis: ["❤️", "🔥", "👍", "✨", "💙"]
           })
         });
 
@@ -87,19 +81,17 @@ export default function WhatsAppBoostView({
         if (botRes.ok && botData.success) {
           setStatus({ 
             type: 'success', 
-            msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT SUCCESSFULLY!` 
+            msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT!` 
           });
           setLink('');
           fetchBalance(currentUser.uid);
           fetchHistory(currentUser.uid);
         } else {
-          // සල්ලි කැපුනා නමුත් බොට් එකේ error එකක් නම් (උදා: invalid invite link)
           setStatus({ 
             type: 'error', 
-            msg: `UPLINK_STABLE_BUT_BOT_REJECTED: ${botData.message || 'UNKNOWN_ERROR'}` 
+            msg: `BOT_REJECTED: ${botData.message || 'UNKNOWN_ERROR'}` 
           });
         }
-
       } else {
         throw new Error(deductData.error || "BALANCE_DEDUCTION_FAILED");
       }
@@ -111,25 +103,39 @@ export default function WhatsAppBoostView({
   };
 
   return (
-    <div className="animate-fade-in pb-10">
-      <div className="bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
+    <div className="animate-fade-in pb-10 px-4 md:px-0">
+      {/* Container with Scroll support */}
+      <div className="max-w-3xl mx-auto bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm max-h-[85vh] overflow-y-auto">
         
-        {/* Header Section */}
-        <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1 flex items-center gap-2">
-            <Smartphone size={12} /> External_Node_Injection
-          </h3>
-          <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-            WhatsApp Protocol Boost
-          </h2>
+        {/* Header Section with Wallet Balance */}
+        <div className="px-6 md:px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md">
+          <div>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1 flex items-center gap-2">
+              <Smartphone size={12} /> External_Node_Injection
+            </h3>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
+              WhatsApp Protocol Boost
+            </h2>
+          </div>
+          
+          {/* Wallet Balance View */}
+          <div className="bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/5 flex items-center gap-3">
+             <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-500">
+               <Wallet size={16} />
+             </div>
+             <div>
+               <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Available_Credits</p>
+               <p className="text-sm font-black text-slate-900 dark:text-white">LKR {parseFloat(userBalance?.total_balance || '0').toFixed(2)}</p>
+             </div>
+          </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-6 md:p-8">
           {/* Service Selector */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <button 
               onClick={() => setType('follow')}
-              className={`relative overflow-hidden group p-5 rounded-3xl border-2 transition-all ${
+              className={`relative p-5 rounded-3xl border-2 transition-all ${
                 type === 'follow' 
                 ? 'border-emerald-500 bg-emerald-500/5' 
                 : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
@@ -141,15 +147,15 @@ export default function WhatsAppBoostView({
                 </div>
                 <div className="text-left">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Newsletter</p>
-                  <p className="font-bold text-slate-900 dark:text-white">Followers Boost</p>
-                  <p className="text-sm font-black text-emerald-500 mt-1">LKR 35.00</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm">Followers Boost</p>
+                  <p className="text-xs font-black text-emerald-500 mt-1">LKR 35.00</p>
                 </div>
               </div>
             </button>
 
             <button 
               onClick={() => setType('react')}
-              className={`relative overflow-hidden group p-5 rounded-3xl border-2 transition-all ${
+              className={`relative p-5 rounded-3xl border-2 transition-all ${
                 type === 'react' 
                 ? 'border-blue-500 bg-blue-500/5' 
                 : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
@@ -161,8 +167,8 @@ export default function WhatsAppBoostView({
                 </div>
                 <div className="text-left">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Reaction</p>
-                  <p className="font-bold text-slate-900 dark:text-white">Mass Reactions</p>
-                  <p className="text-sm font-black text-blue-500 mt-1">LKR 5.00</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm">Mass Reactions</p>
+                  <p className="text-xs font-black text-blue-500 mt-1">LKR 5.00</p>
                 </div>
               </div>
             </button>
@@ -171,7 +177,7 @@ export default function WhatsAppBoostView({
           {/* Input Area */}
           <div className="space-y-6">
             <div className="relative group">
-              <label className="absolute left-5 -top-2 px-2 bg-white dark:bg-[#161d2f] text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 z-10">
+              <label className="absolute left-5 -top-2 px-2 bg-white dark:bg-[#111827] text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 z-10">
                 Target_Protocol_URL
               </label>
               <input 
@@ -191,7 +197,7 @@ export default function WhatsAppBoostView({
                 : 'bg-red-500/10 border-red-500/20 text-red-500'
               }`}>
                 {status.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                <p className="text-[9px] font-black uppercase tracking-widest">{status.msg}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest leading-tight">{status.msg}</p>
               </div>
             )}
 
@@ -199,8 +205,8 @@ export default function WhatsAppBoostView({
             <button
               onClick={handleExecute}
               disabled={loading || !link}
-              className={`w-full relative overflow-hidden group py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all active:scale-[0.98] disabled:opacity-30 ${
-                type === 'follow' ? 'bg-emerald-600 shadow-emerald-600/20' : 'bg-blue-600 shadow-blue-600/20'
+              className={`w-full relative py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all active:scale-[0.98] disabled:opacity-30 ${
+                type === 'follow' ? 'bg-emerald-600' : 'bg-blue-600'
               } text-white shadow-xl`}
             >
               {loading ? (
@@ -211,12 +217,12 @@ export default function WhatsAppBoostView({
               ) : (
                 <div className="flex items-center justify-center gap-2">
                   <span>EXECUTE_STRIKE</span>
-                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight size={14} />
                 </div>
               )}
             </button>
             
-            <p className="text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-50">
+            <p className="text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-50 pb-4">
               * Verification required. Latency may occur during node overload.
             </p>
           </div>
