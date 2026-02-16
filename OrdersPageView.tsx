@@ -85,24 +85,38 @@ const convertUsdToLkr = (usdAmount: number, rate: number): number => {
   return usdAmount * rate;
 };
 
-// Calculate price with 50 LKR profit
-const calculatePriceWithProfit = (usdRate: number, quantity: number, serviceRate: number): { usd: number, lkr: number } => {
-  // Calculate base price in USD (rate per 1000)
-  const baseUsdPrice = (quantity / 1000) * serviceRate;
+const calculatePriceWithProfit = (quantity: number, serviceRate: number): number => {
+  // Calculate base price in LKR (rate per 1000)
+  const baseLkrPrice = (quantity / 1000) * serviceRate;
   
-  // Convert to LKR
-  const baseLkrPrice = convertUsdToLkr(baseUsdPrice, usdRate);
+  // Apply PROFIT MARGIN based on service rate
+  let profitPercentage = 0.2; // Default 20% profit
   
-  // Add 50 LKR profit
-  const lkrWithProfit = baseLkrPrice + 50;
+  if (serviceRate < 5) {
+    // For very cheap services (< 5 LKR per 1k)
+    profitPercentage = 0.5; // 50% profit
+  } else if (serviceRate < 15) {
+    // For low-medium services (5-15 LKR per 1k)
+    profitPercentage = 0.35; // 35% profit
+  } else if (serviceRate < 30) {
+    // For medium services (15-30 LKR per 1k)
+    profitPercentage = 0.25; // 25% profit
+  } else if (serviceRate < 50) {
+    // For medium-high services (30-50 LKR per 1k)
+    profitPercentage = 0.2; // 20% profit
+  } else {
+    // For expensive services (> 50 LKR per 1k)
+    profitPercentage = 0.15; // 15% profit
+  }
   
-  // Convert back to USD for display
-  const usdWithProfit = convertLkrToUsd(lkrWithProfit, usdRate);
+  // Calculate profit amount
+  const profitAmount = baseLkrPrice * profitPercentage;
   
-  return {
-    usd: usdWithProfit,
-    lkr: lkrWithProfit
-  };
+  // Add profit to base price
+  const lkrWithProfit = baseLkrPrice + profitAmount;
+  
+  // Ensure minimum profit of 5 LKR (for very small quantities)
+  return Math.max(lkrWithProfit, baseLkrPrice + 5);
 };
 
 export default function OrdersPageView({ scrollContainerRef }: any) {
@@ -349,21 +363,18 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     return () => clearInterval(interval);
   }, [currentUser, activeView, orders.length]);
 
-  // ============================================
-  // CHECK BALANCE WHEN QUANTITY OR SERVICE CHANGES
-  // ============================================
-  useEffect(() => {
-    if (serviceDetails && quantity && currentUser) {
-      const totalPrice = calculatePriceWithProfit(
-        usdRate,
-        parseInt(quantity) || 0,
-        parseFloat(serviceDetails.rate)
-      );
-      
-      const balance = parseFloat(userBalance.total_balance);
-      setInsufficientBalance(totalPrice.lkr > balance);
-    }
-  }, [serviceDetails, quantity, userBalance, usdRate, currentUser]);
+// CHECK BALANCE WHEN QUANTITY OR SERVICE CHANGES
+useEffect(() => {
+  if (serviceDetails && quantity && currentUser) {
+    const totalPrice = calculatePriceWithProfit(
+      parseInt(quantity) || 0,
+      parseFloat(serviceDetails.rate)
+    );
+    
+    const balance = parseFloat(userBalance.total_balance);
+    setInsufficientBalance(totalPrice > balance);
+  }
+}, [serviceDetails, quantity, userBalance, currentUser]);
 
   // ============================================
   // SCROLL HANDLERS
@@ -518,9 +529,6 @@ export default function OrdersPageView({ scrollContainerRef }: any) {
     };
   }, [filteredOrders, usdRate]);
 
-// ============================================
-// PLACE ORDER - WITH WALLET DEDUCTION
-// ============================================
 const placeOrder = async (e: React.FormEvent) => {
   e.preventDefault();
   
@@ -534,16 +542,15 @@ const placeOrder = async (e: React.FormEvent) => {
     return;
   }
 
-  // Calculate price with profit
-  const priceWithProfit = calculatePriceWithProfit(
-    usdRate,
+  // Calculate price with profit (LKR only)
+  const finalPrice = calculatePriceWithProfit(
     parseInt(quantity) || 0,
     parseFloat(serviceDetails?.rate || 0)
   );
 
   // Check if user has sufficient balance
-  if (priceWithProfit.lkr > parseFloat(userBalance.total_balance)) {
-    setOrderError(`Insufficient balance. You need LKR ${priceWithProfit.lkr.toFixed(2)} but have LKR ${userBalance.total_balance}`);
+  if (finalPrice > parseFloat(userBalance.total_balance)) {
+    setOrderError(`Insufficient balance. You need LKR ${finalPrice.toFixed(2)} but have LKR ${userBalance.total_balance}`);
     return;
   }
 
@@ -567,7 +574,7 @@ const placeOrder = async (e: React.FormEvent) => {
     const data = await fetchSmmApi(params);
     
     if (data && data.order) {
-      // 2. Deduct amount from wallet using the worker endpoint
+      // 2. Deduct amount from wallet
       const deductionResponse = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: 'POST',
         headers: {
@@ -575,7 +582,7 @@ const placeOrder = async (e: React.FormEvent) => {
         },
         body: JSON.stringify({
           userId: currentUser.uid,
-          amount: priceWithProfit.lkr,
+          amount: finalPrice,
           description: `Order #${data.order} - ${serviceDetails?.name || 'SMM Order'}`
         }),
       });
@@ -586,15 +593,14 @@ const placeOrder = async (e: React.FormEvent) => {
         throw new Error(deductionResult.error || 'Failed to deduct from wallet. Order cancelled.');
       }
 
-      // 3. Save order to Firestore with user ID (store the LKR amount with profit)
+      // 3. Save order to Firestore (LKR only)
       const orderData = {
         orderId: data.order,
         serviceId: selectedServiceId,
         serviceName: serviceDetails?.name || `Service #${selectedServiceId}`,
         link: link,
         quantity: parseInt(quantity),
-        charge: priceWithProfit.lkr.toFixed(2), // Store LKR amount with profit
-        chargeUsd: priceWithProfit.usd.toFixed(2), // Store USD equivalent
+        charge: finalPrice.toFixed(2), // Store LKR amount only
         status: 'Pending',
         remains: parseInt(quantity),
         date: new Date().toISOString()
@@ -609,10 +615,7 @@ const placeOrder = async (e: React.FormEvent) => {
       setOrderSuccess({
         order: data.order,
         message: 'Order placed successfully!',
-        price: {
-          lkr: priceWithProfit.lkr.toFixed(2),
-          usd: priceWithProfit.usd.toFixed(2)
-        }
+        price: finalPrice.toFixed(2)
       });
       
       // 6. Reset form
@@ -1295,32 +1298,31 @@ const placeOrder = async (e: React.FormEvent) => {
         ) : (
           /* NEW ORDER FORM VIEW */
           <div className="max-w-3xl mx-auto">
-            {/* Success Message - UPDATED with LKR/USD */}
-            {orderSuccess && (
-              <div className="mb-6 p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                    <CheckCircle size={20} className="text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-emerald-500">Order Placed Successfully!</p>
-                    <p className="text-[10px] font-bold text-emerald-600/70">Order ID: #{orderSuccess.order}</p>
-                    <p className="text-[8px] font-bold text-emerald-600/50">
-                      Charged: LKR {orderSuccess.price?.lkr} (${orderSuccess.price?.usd})
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => {
-                    setActiveView('orders');
-                    setOrderSuccess(null);
-                  }}
-                  className="px-4 py-2 bg-emerald-500/20 rounded-xl text-[9px] font-black uppercase text-emerald-500"
-                >
-                  View Orders
-                </button>
-              </div>
-            )}
+{orderSuccess && (
+  <div className="mb-6 p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+        <CheckCircle size={20} className="text-emerald-500" />
+      </div>
+      <div>
+        <p className="text-sm font-black text-emerald-500">Order Placed Successfully!</p>
+        <p className="text-[10px] font-bold text-emerald-600/70">Order ID: #{orderSuccess.order}</p>
+        <p className="text-[8px] font-bold text-emerald-600/50">
+          Charged: LKR {orderSuccess.price}
+        </p>
+      </div>
+    </div>
+    <button 
+      onClick={() => {
+        setActiveView('orders');
+        setOrderSuccess(null);
+      }}
+      className="px-4 py-2 bg-emerald-500/20 rounded-xl text-[9px] font-black uppercase text-emerald-500"
+    >
+      View Orders
+    </button>
+  </div>
+)}
 
             {/* Error Message */}
             {orderError && (
@@ -1330,21 +1332,19 @@ const placeOrder = async (e: React.FormEvent) => {
               </div>
             )}
 
-            {/* Insufficient Balance Warning */}
-            {insufficientBalance && serviceDetails && quantity && !orderError && (
-              <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
-                <AlertCircle size={16} className="text-amber-500" />
-                <p className="text-[9px] font-bold text-amber-500">
-                  ⚠️ Insufficient funds. You need LKR {
-                    calculatePriceWithProfit(
-                      usdRate, 
-                      parseInt(quantity) || 0, 
-                      parseFloat(serviceDetails.rate)
-                    ).lkr.toFixed(2)
-                  } but have LKR {userBalance.total_balance}
-                </p>
-              </div>
-            )}
+{insufficientBalance && serviceDetails && quantity && !orderError && (
+  <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
+    <AlertCircle size={16} className="text-amber-500" />
+    <p className="text-[9px] font-bold text-amber-500">
+      ⚠️ Insufficient funds. You need LKR {
+        calculatePriceWithProfit(
+          parseInt(quantity) || 0, 
+          parseFloat(serviceDetails.rate)
+        ).toFixed(2)
+      } but have LKR {userBalance.total_balance}
+    </p>
+  </div>
+)}
 
             <div className="bg-white dark:bg-[#0f172a]/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
               <div className="p-6 md:p-8 border-b border-slate-200 dark:border-white/5">
@@ -1500,25 +1500,14 @@ const placeOrder = async (e: React.FormEvent) => {
   <div className="mt-2 p-3 bg-blue-600/5 rounded-xl border border-blue-600/20">
     <div className="flex justify-between items-center">
       <span className="text-[9px] font-black uppercase text-slate-500">Total Price:</span>
-      <div className="text-right">
-        <span className="text-lg font-black text-blue-600">
-          LKR {calculatePriceWithProfit(
-            usdRate,
-            parseInt(quantity),
-            parseFloat(serviceDetails.rate)
-          ).lkr.toFixed(2)}
-        </span>
-        <p className="text-[8px] font-bold text-slate-400">
-          ≈ ${calculatePriceWithProfit(
-            usdRate,
-            parseInt(quantity),
-            parseFloat(serviceDetails.rate)
-          ).usd.toFixed(2)} USD
-        </p>
-      </div>
-      </div>
+      <span className="text-lg font-black text-blue-600">
+        LKR {calculatePriceWithProfit(
+          parseInt(quantity),
+          parseFloat(serviceDetails.rate)
+        ).toFixed(2)}
+      </span>
     </div>
-    
+  </div>
 )}
                   </div>
 
