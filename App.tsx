@@ -121,6 +121,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showWaBoost, setShowWaBoost] = useState(false); // New state for WA Boost Modal
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -145,12 +146,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (showLogin || showSignup) {
+    if (showLogin || showSignup || showWaBoost) {
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
     }
-  }, [showLogin, showSignup]);
+  }, [showLogin, showSignup, showWaBoost]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -175,9 +176,10 @@ export default function App() {
     setUser(updatedUser);
   };
 
-  const openLogin = () => { setShowLogin(true); setShowSignup(false); };
-  const openSignup = () => { setShowSignup(true); setShowLogin(false); };
-  const closeModals = () => { setShowLogin(false); setShowSignup(false); };
+  const openLogin = () => { setShowLogin(true); setShowSignup(false); setShowWaBoost(false); };
+  const openSignup = () => { setShowSignup(true); setShowLogin(false); setShowWaBoost(false); };
+  const openWaBoost = () => { setShowWaBoost(true); setShowLogin(false); setShowSignup(false); };
+  const closeModals = () => { setShowLogin(false); setShowSignup(false); setShowWaBoost(false); };
 
   // Initial load spinner
   if (loading) {
@@ -201,9 +203,10 @@ export default function App() {
             onLogout={handleLogout}
             onLoginClick={openLogin}
             onSignupClick={openSignup}
+            onWaBoostClick={openWaBoost} // Added this prop to Navbar
           />
 
-          <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
+          <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup || showWaBoost) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
               <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
               <Route path="/onboarding" element={<OnboardingPage user={user} onComplete={handleOnboardingComplete} />} />
@@ -217,9 +220,8 @@ export default function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/terms-of-service" element={<TermsofServicePage />} />
               <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
-              <Route path="*" element={<Navigate to="/" />} />
               <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
-              <Route path="/wa-boost" element={<WaBoost />} />
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>
 
@@ -230,6 +232,16 @@ export default function App() {
           )}
           {showSignup && (
             <SignupPage onSignup={handleAuth} onClose={closeModals} onSwitchToLogin={openLogin} />
+          )}
+          {/* Rendering WaBoost as a Modal */}
+          {showWaBoost && (
+            <WaBoost 
+              currentUser={user} 
+              WORKER_URL="https://your-worker-url.workers.dev" // Replace with your actual worker URL
+              fetchBalance={() => {}} // You can pass actual functions here if needed
+              fetchHistory={() => {}}
+              onClose={closeModals} 
+            />
           )}
         </div>
       </>
