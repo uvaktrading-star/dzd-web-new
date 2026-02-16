@@ -68,22 +68,7 @@ export default function DashboardPage({ user }: any) {
       return () => clearInterval(interval);
     }
   }, [user]);
-  // -----------------------------------------
 
-  if (!user) return <Navigate to="/" />;
-
-  const menuItems = [
-    { id: 'home', label: 'Dashboard', icon: <LayoutGrid />, color: 'text-blue-500', path: '/dashboard/home' },
-    { id: 'services', label: 'Services', icon: <List />, color: 'text-indigo-500', path: '/dashboard/services' },
-    { id: 'orders', label: 'Orders', icon: <History />, color: 'text-pink-500', path: '/dashboard/orders' },
-    { id: 'wallet', label: 'Wallet', icon: <Wallet />, color: 'text-amber-500', path: '/dashboard/wallet' },
-    { id: 'tickets', label: 'Tickets', icon: <Ticket />, color: 'text-slate-500', path: '/dashboard/tickets' }
-  ];
-
-  const handleTabChange = (tabId: string, path: string) => {
-    setActiveTab(tabId);
-    navigate(path);
-  };
 
   const renderContent = () => {
     // Balance එක LKR format එකට Dashboard views වලට යවනවා
