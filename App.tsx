@@ -20,6 +20,7 @@ import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
+import WaBoost from '../waboost/WhatsAppBoostView';
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
@@ -217,6 +218,7 @@ export default function App() {
               <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
               <Route path="*" element={<Navigate to="/" />} />
               <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
+              <Route path="/wa-boost" element={<WaBoost />} />
             </Routes>
           </main>
 
