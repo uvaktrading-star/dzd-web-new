@@ -8,7 +8,8 @@ import {
   Loader2,
   Heart,
   UserPlus,
-  Wallet
+  Wallet,
+  X // Close button එක සඳහා Lucide icon එකක් එක් කළා
 } from 'lucide-react';
 
 interface WhatsAppBoostProps {
@@ -17,6 +18,7 @@ interface WhatsAppBoostProps {
   WORKER_URL: string;
   fetchBalance: (uid: string) => void;
   fetchHistory: (uid: string) => void;
+  onClose?: () => void; // Modal එක වැසීමට අවශ්‍ය prop එක
 }
 
 export default function WhatsAppBoostView({ 
@@ -24,20 +26,19 @@ export default function WhatsAppBoostView({
   userBalance, 
   WORKER_URL, 
   fetchBalance,
-  fetchHistory 
+  fetchHistory,
+  onClose // Modal එක වැසීමට අවශ්‍ය function එක
 }: WhatsAppBoostProps) {
   const [loading, setLoading] = useState(false);
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
   
-  // Live Balance State (Navbar එකේ වගේම sync වීමට)
   const [liveBalance, setLiveBalance] = useState("0.00");
 
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // Balance එක update වන විට local state එකත් update කිරීම
   useEffect(() => {
     if (userBalance?.total_balance) {
       setLiveBalance(parseFloat(userBalance.total_balance).toFixed(2));
@@ -62,7 +63,6 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // STEP 1: සල්ලි කැපීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,8 +76,6 @@ export default function WhatsAppBoostView({
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        
-        // STEP 2: බොට් එකට signal එක යැවීම
         const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -97,7 +95,6 @@ export default function WhatsAppBoostView({
             msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT!` 
           });
           setLink('');
-          // මුදල් කැපුන නිසා වහාම balance එක refresh කරන්න
           fetchBalance(currentUser.uid);
           fetchHistory(currentUser.uid);
         } else {
@@ -117,30 +114,43 @@ export default function WhatsAppBoostView({
   };
 
   return (
-    // pt-20 මගින් Navbar එකට වැහෙන එක වළක්වයි
-    <div className="animate-fade-in pt-20 pb-10 px-4">
-      <div className="max-w-md mx-auto bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl backdrop-blur-md">
+    /* Modal Overlay: මුළු Screen එකම වසා ගන්නා ලෙස සාදා ඇත */
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Background Blur Overlay */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+        onClick={onClose} // පිටත click කළ විට වැසීමට
+      />
+
+      <div className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute right-6 top-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors z-20"
+        >
+          <X size={20} />
+        </button>
+
         {/* Header Section */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex justify-between items-start mb-4">
-             <div>
+              <div>
                 <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1 flex items-center gap-2">
                   <Smartphone size={12} /> External_Node
                 </h3>
                 <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
                   WA Protocol
                 </h2>
-             </div>
-             
-             {/* Wallet Display - Navbar එකේ style එකටම */}
-             <div className="flex flex-col items-end">
+              </div>
+              
+              <div className="flex flex-col items-end pr-8">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Available_Credits</span>
                 <div className="flex items-center gap-2 bg-blue-600/10 border border-blue-600/20 px-3 py-1 rounded-full">
                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
                    <span className="text-xs font-black text-blue-600">LKR {liveBalance}</span>
                 </div>
-             </div>
+              </div>
           </div>
         </div>
 
