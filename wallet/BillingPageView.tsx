@@ -8,11 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase'; 
 
-const EXCHANGE_API = import.meta.env.VITE_EXCHANGE_API;
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
-
-// Time constants
-const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 export default function BillingPageView({ user: propUser }: any) {
   const navigate = useNavigate();
@@ -26,9 +22,6 @@ export default function BillingPageView({ user: propUser }: any) {
   const [copied, setCopied] = useState(false);
   const [userBalance, setUserBalance] = useState({ total_balance: "0.00", pending_balance: "0.00" });
   
-  // USD Rate State
-  const [usdRate, setUsdRate] = useState(310); // Default rate
-
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -39,37 +32,6 @@ export default function BillingPageView({ user: propUser }: any) {
   });
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-  // --- 1. Fetch & Auto-Update USD Rate (Every 6 Hours) ---
-  useEffect(() => {
-    const fetchUsdRate = async () => {
-      try {
-        const res = await fetch(EXCHANGE_API);
-        const data = await res.json();
-        if (data.result === "success") {
-          setUsdRate(data.conversion_rates.LKR);
-          console.log(`Rate Updated: 1 USD = ${data.conversion_rates.LKR} LKR`);
-        }
-      } catch (err) {
-        console.error("Exchange API failed, using default 310", err);
-      }
-    };
-
-    // Initial fetch
-    fetchUsdRate();
-
-    // Set interval for 6 hours
-    const interval = setInterval(fetchUsdRate, SIX_HOURS_IN_MS);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Balance conversion logic
-  const convertToUsd = (lkrAmount: string) => {
-    const val = parseFloat(lkrAmount);
-    if (isNaN(val)) return "0.00";
-    return (val / usdRate).toFixed(2);
-  };
 
   // Auth & User logic
   useEffect(() => {
@@ -440,9 +402,6 @@ export default function BillingPageView({ user: propUser }: any) {
                 <h3 className="text-4xl font-black tracking-tighter tabular-nums flex items-baseline gap-2">
                   <span className="text-lg opacity-60">LKR</span> {userBalance.total_balance}
                 </h3>
-                <p className="text-[11px] font-black mt-1 opacity-80 bg-black/20 w-fit px-3 py-1 rounded-full border border-white/10">
-                   ≈ ${convertToUsd(userBalance.total_balance)} USD
-                </p>
               </div>
               <WalletIcon size={120} className="absolute -right-6 -bottom-6 opacity-10 rotate-12" />
             </div>
@@ -453,9 +412,6 @@ export default function BillingPageView({ user: propUser }: any) {
               <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">
                 LKR {userBalance.pending_balance}
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
-                 ≈ ${convertToUsd(userBalance.pending_balance)} USD
-              </p>
               <div className="mt-4 flex items-center gap-2">
                 <div className="h-1.5 flex-1 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                   <div className={`h-full bg-amber-500 transition-all duration-1000 ${parseFloat(userBalance.pending_balance) > 0 ? 'w-1/3 animate-pulse' : 'w-0'}`}></div>
