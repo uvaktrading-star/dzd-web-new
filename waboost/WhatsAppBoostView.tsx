@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 interface WhatsAppBoostProps {
-  user: any; // Dashboard එකේ වගේම 'user' ලෙස ගත්තා
+  user: any; 
   WORKER_URL: string;
   onBack?: () => void;
   fetchBalance: (uid: string) => void;
@@ -22,11 +22,12 @@ interface WhatsAppBoostProps {
 export default function WhatsAppBoostView({ 
   user, 
   WORKER_URL, 
-  fetchBalance: syncMainBalance, // Main App sync එකට
+  fetchBalance: syncMainBalance, 
   fetchHistory,
   onBack
 }: WhatsAppBoostProps) {
-  // --- Dashboard එකේ තියෙන State එකමයි ---
+  
+  // Dashboard එකේ තියෙන විදියටම states ටික
   const [userBalance, setUserBalance] = useState("0.00");
   const [loading, setLoading] = useState({
     balance: false,
@@ -40,15 +41,16 @@ export default function WhatsAppBoostView({
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // --- Dashboard එකේ 'fetchBalance' Function එක එලෙසම ---
+  // --- Dashboard එකේ 'fetchBalance' Function එක 1:1 මෙතනට ---
   const fetchBalance = useCallback(async (uid: string) => {
     setLoading(prev => ({ ...prev, balance: true }));
     try {
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
       const data = await response.json();
+      // Dashboard එකේ දත්ත update කරන විදියටම
       setUserBalance(parseFloat(data.total_balance || 0).toFixed(2));
       
-      // Main app එකේ Navbar එකත් sync කරමු
+      // Main Navbar එකත් update වෙන්න මේක ඕනේ
       syncMainBalance(uid); 
     } catch (error) {
       console.error("Error fetching balance:", error);
@@ -57,12 +59,15 @@ export default function WhatsAppBoostView({
     }
   }, [WORKER_URL, syncMainBalance]);
 
-  // --- Auto-refresh logic (Dashboard එකේ වගේම) ---
+  // --- Dashboard එකේ useEffect එක මෙතනට ---
   useEffect(() => {
     if (user?.uid) {
+      // පළමු වතාවට load කිරීම
       fetchBalance(user.uid);
-      // Auto-refresh balance every 30 seconds
+      
+      // තත්පර 30න් 30ට auto-refresh වීම (Dashboard එකේ logic එක)
       const balanceInterval = setInterval(() => fetchBalance(user.uid), 30000);
+      
       return () => clearInterval(balanceInterval);
     }
   }, [user, fetchBalance]);
@@ -85,6 +90,7 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
+      // 1. සල්ලි කැපීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,10 +104,11 @@ export default function WhatsAppBoostView({
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        // සල්ලි කැපුන ගමන්ම නැවත Balance එක sync කරනවා
-        fetchBalance(user.uid);
+        // සල්ලි කැපුන ගමන්ම Dashboard එකේ වගේ Balance එක refresh කරනවා
+        await fetchBalance(user.uid);
         fetchHistory(user.uid);
 
+        // 2. BOT එකට signal එක යැවීම
         const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -135,7 +142,6 @@ export default function WhatsAppBoostView({
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-24 pb-12 px-4 animate-fade-in transition-colors duration-500">
       <div className="max-w-xl mx-auto">
         
-        {/* Navigation & Header */}
         <div className="flex items-center justify-between mb-8 px-2">
           <button 
             onClick={onBack}
@@ -151,7 +157,7 @@ export default function WhatsAppBoostView({
 
         <div className="bg-white dark:bg-[#0f172a]/60 rounded-[3rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
           
-          {/* Balance Banner - Dashboard එකේ විදියටමයි */}
+          {/* Balance Section - Dashboard එකේ කාඩ් එකට සමානයි */}
           <div className="px-8 py-7 bg-slate-50/50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
@@ -173,7 +179,6 @@ export default function WhatsAppBoostView({
           </div>
 
           <div className="p-8 space-y-8">
-            {/* Service Selection */}
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Operation_Type</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -201,7 +206,6 @@ export default function WhatsAppBoostView({
               </div>
             </div>
 
-            {/* Input Field */}
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Channel_Protocol_Link</label>
               <input 
@@ -209,13 +213,12 @@ export default function WhatsAppBoostView({
                 placeholder="https://whatsapp.com/channel/..."
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-[1.5rem] py-5 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:ring-2 ring-blue-500/20 transition-all"
+                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-[1.5rem] py-5 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:ring-2 ring-blue-500/20 transition-all shadow-inner"
               />
             </div>
 
-            {/* Status Feedback */}
             {status && (
-              <div className={`flex items-center gap-4 p-5 rounded-[1.5rem] border animate-in slide-in-from-bottom-2 ${
+              <div className={`flex items-center gap-4 p-5 rounded-[1.5rem] border animate-in slide-in-from-bottom-2 duration-300 ${
                 status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
               }`}>
                 {status.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
@@ -223,7 +226,6 @@ export default function WhatsAppBoostView({
               </div>
             )}
 
-            {/* Execute Button */}
             <button
               onClick={handleExecute}
               disabled={loading.executing || !link}
