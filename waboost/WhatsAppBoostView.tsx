@@ -30,15 +30,22 @@ export default function WhatsAppBoostView({
   const [type, setType] = useState<'follow' | 'react'>('follow');
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
+  // --- CONFIGURATION ---
+  // ඔයාගේ Heroku App URL එක මෙතනට දාන්න
+  const BOT_API_URL = "https://ඔයාගේ-heroku-app-name.herokuapp.com/api/boost";
+  const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
+
   const handleExecute = async () => {
-    if (!link.includes('whatsapp.com')) {
-      setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_PROTOCOL_LINK' });
+    // 1. Link Validation
+    if (!link.includes('whatsapp.com/channel/')) {
+      setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_CHANNEL_LINK' });
       return;
     }
 
     const cost = type === 'follow' ? 35 : 5;
     const balance = parseFloat(userBalance?.total_balance || '0');
 
+    // 2. Balance Check
     if (balance < cost) {
       setStatus({ type: 'error', msg: 'INSUFFICIENT_CREDITS_IN_CORE' });
       return;
@@ -48,38 +55,53 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. Worker එකෙන් සල්ලි කැපීම
+      // STEP 1: Cloudflare Worker එක හරහා මුදල් කපා ගැනීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: currentUser.uid,
-          amount: cost
+          amount: cost,
+          service: `WhatsApp ${type === 'follow' ? 'Followers' : 'Reactions'}`
         })
       });
 
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        // 2. සල්ලි කැපීම සාර්ථක නම් Bot එකට දැනුම් දීම
-        // Heroku බොට් එකේ API එක මෙතනට දාන්න
-        await fetch("https://ඔයාගේ-heroku-app-name.herokuapp.com/boost", {
+        
+        // STEP 2: මුදල් කැපීම සාර්ථක නම් Heroku Bot එකට Signal එක යැවීම
+        const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: currentUser.uid,
-            email: currentUser.email,
-            service: type,
-            url: link
+            key: BOT_AUTH_KEY, // Bot එකේ තියෙන key එකම විය යුතුය
+            type: type,        // 'follow' හෝ 'react'
+            link: link.trim(),
+            emojis: ["❤️", "🔥", "👍", "✨", "💙"] // Reactions සඳහා emojis
           })
         });
 
-        setStatus({ type: 'success', msg: `NODE_INJECTED: LKR ${cost} DEDUCTED` });
-        setLink('');
-        fetchBalance(currentUser.uid);
-        fetchHistory(currentUser.uid);
+        const botData = await botRes.json();
+
+        if (botRes.ok && botData.success) {
+          setStatus({ 
+            type: 'success', 
+            msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT SUCCESSFULLY!` 
+          });
+          setLink('');
+          fetchBalance(currentUser.uid);
+          fetchHistory(currentUser.uid);
+        } else {
+          // සල්ලි කැපුනා නමුත් බොට් එකේ error එකක් නම් (උදා: invalid invite link)
+          setStatus({ 
+            type: 'error', 
+            msg: `UPLINK_STABLE_BUT_BOT_REJECTED: ${botData.message || 'UNKNOWN_ERROR'}` 
+          });
+        }
+
       } else {
-        throw new Error(deductData.error || "UPLINK_ERROR");
+        throw new Error(deductData.error || "BALANCE_DEDUCTION_FAILED");
       }
     } catch (err: any) {
       setStatus({ type: 'error', msg: err.message || "PROTOCOL_FAULT" });
@@ -154,7 +176,7 @@ export default function WhatsAppBoostView({
               </label>
               <input 
                 type="text"
-                placeholder="https://whatsapp.com/channel/..."
+                placeholder={type === 'follow' ? "https://whatsapp.com/channel/XYZ" : "https://whatsapp.com/channel/XYZ/123"}
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all shadow-inner"
