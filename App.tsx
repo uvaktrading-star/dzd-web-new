@@ -20,7 +20,7 @@ import TermsofServicePage from './TermsofService';
 import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
-import WaBoost from './waboost/WhatsAppBoostView';
+
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
