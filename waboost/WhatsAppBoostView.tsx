@@ -32,7 +32,7 @@ export default function WhatsAppBoostView({
 
   // --- CONFIGURATION ---
   // ඔයාගේ Heroku App URL එක මෙතනට දාන්න
-  const BOT_API_URL = "https://ඔයාගේ-heroku-app-name.herokuapp.com/api/boost";
+  const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
   const handleExecute = async () => {
