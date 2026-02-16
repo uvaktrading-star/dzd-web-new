@@ -7,7 +7,6 @@ import {
   Heart,
   UserPlus,
   ArrowLeft,
-  Wallet,
   Zap
 } from 'lucide-react';
 
@@ -33,13 +32,10 @@ export default function WhatsAppBoostView({
   
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
-  const [selectedEmoji, setSelectedEmoji] = useState("❤️"); // Default emoji
+  const [selectedEmoji, setSelectedEmoji] = useState("❤️");
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
-  const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
   const availableEmojis = ["❤️", "🔥", "👍", "✨", "💙", "😂", "💯", "✅"];
-
   const cleanBaseUrl = WORKER_URL?.replace(/\/$/, "");
 
   const refreshBalance = useCallback(async (uid: string) => {
@@ -84,46 +80,46 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. මුලින්ම සල්ලි කපනවා (Database Update)
+      // 1. Deduct Balance
       const deductRes = await fetch(`${cleanBaseUrl}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.uid,
           amount: cost,
-          description: `WA ${type} Boost: ${selectedEmoji}`
+          description: `WA ${type} Boost`
         })
       });
 
       const deductData = await deductRes.json();
-
       if (!deductRes.ok || !deductData.success) {
         throw new Error(deductData.error || "TRANSACTION FAILED");
       }
 
-      // සල්ලි කැපුන ගමන් Balance එක UI එකේ update කරනවා
       setTotalBalance(parseFloat(deductData.newBalance).toFixed(2));
       syncAppBalance(user.uid);
 
-      // 2. සල්ලි කැපීම සාර්ථක නම් විතරක් Bot එකට Signal එක යවනවා
-      const botRes = await fetch(BOT_API_URL, {
+      // 2. Send Signal via MongoDB (Vercel API)
+      // ඔයාගේ Bot format එකට targetJid එක හදනවා
+      // React නම්: "link,emoji" | Follow නම්: "link"
+      const formattedTarget = type === 'react' ? `${link.trim()},${selectedEmoji}` : link.trim();
+
+      const signalRes = await fetch('/api/send-signal', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: BOT_AUTH_KEY,
           type: type,
-          link: link.trim(),
-          emojis: type === 'react' ? [selectedEmoji] : ["✅"] // Reaction එකක් නම් තෝරපු emoji එක යවනවා
+          targetJid: formattedTarget,
+          serverId: "100", // Default server ID
+          emojiList: [selectedEmoji]
         })
       });
 
-      const botData = await botRes.json();
-
-      if (botRes.ok && botData.success) {
+      if (signalRes.ok) {
         setStatus({ type: 'success', msg: 'STRIKE DEPLOYED SUCCESSFULLY!' });
         setLink(''); 
       } else {
-        setStatus({ type: 'error', msg: 'SIGNAL DELAYED. CREDITS DEDUCTED. CONTACT SUPPORT.' });
+        setStatus({ type: 'error', msg: 'SIGNAL DELAYED. CONTACT SUPPORT.' });
       }
 
     } catch (err: any) {
@@ -136,8 +132,6 @@ export default function WhatsAppBoostView({
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-20 pb-12 px-4">
       <div className="max-w-xl mx-auto">
-        
-        {/* Top Header */}
         <div className="flex items-center justify-between mb-6">
           <button onClick={onBack} className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:scale-105 transition-all">
             <ArrowLeft size={20} />
@@ -149,8 +143,6 @@ export default function WhatsAppBoostView({
         </div>
 
         <div className="bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
-          
-          {/* Balance Card - Now with Gradient */}
           <div className="p-1">
             <div className="px-8 py-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2.3rem] text-white shadow-xl relative overflow-hidden">
                <Zap className="absolute right-[-10px] top-[-10px] w-32 h-32 opacity-10 rotate-12" />
@@ -170,7 +162,6 @@ export default function WhatsAppBoostView({
           </div>
 
           <div className="p-8 space-y-8">
-            {/* Service Type */}
             <div className="space-y-4">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Choose_Operation</label>
               <div className="grid grid-cols-2 gap-4">
@@ -187,7 +178,6 @@ export default function WhatsAppBoostView({
               </div>
             </div>
 
-            {/* Emoji Selector - Only shows for Reactions */}
             {type === 'react' && (
                <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Select_Reaction</label>
@@ -205,7 +195,6 @@ export default function WhatsAppBoostView({
                </div>
             )}
 
-            {/* Link Input */}
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Channel_Endpoint</label>
               <input 
@@ -217,7 +206,6 @@ export default function WhatsAppBoostView({
               />
             </div>
 
-            {/* Status Alert */}
             {status && (
               <div className={`flex items-start gap-4 p-5 rounded-2xl border animate-in zoom-in duration-300 ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
                 {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
@@ -225,7 +213,6 @@ export default function WhatsAppBoostView({
               </div>
             )}
 
-            {/* Launch Button */}
             <button
               onClick={handleExecute}
               disabled={loading.executing || !link}
@@ -236,7 +223,7 @@ export default function WhatsAppBoostView({
               {loading.executing ? (
                 <div className="flex items-center justify-center gap-3">
                   <Loader2 size={18} className="animate-spin" />
-                  <span className="animate-pulse">DEPLOING STRIKE...</span>
+                  <span className="animate-pulse">DEPLOYING STRIKE...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
