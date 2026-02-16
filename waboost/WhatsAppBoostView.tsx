@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 
 interface WhatsAppBoostProps {
-  currentUser: any; // Dashboard එකේ user prop එක මෙතනට currentUser ලෙස එනවා නම්
+  currentUser: any;
+  userBalance: any;
   WORKER_URL: string;
   fetchBalance: (uid: string) => void;
   fetchHistory: (uid: string) => void;
@@ -27,45 +28,39 @@ export default function WhatsAppBoostView({
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
-  
-  // Dashboard එකේ වගේම balance එක තියාගන්න state එක
   const [navBalance, setNavBalance] = useState("0.00");
 
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // Dashboard එකේ fetchBalance logic එක මෙතනට ගැලපෙන ලෙස
+  // Balance එක sync කරන function එක
   const syncBalance = useCallback(async () => {
     if (!currentUser?.uid || !WORKER_URL) return;
     
     try {
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${currentUser.uid}`);
+      if (!response.ok) throw new Error("Sync failed");
       const data = await response.json();
-      // Dashboard එකේ parseFloat කරලා fix කරපු විදියටම:
       setNavBalance(parseFloat(data.total_balance || 0).toFixed(2));
     } catch (error) {
       console.error("Balance sync error:", error);
     }
   }, [currentUser?.uid, WORKER_URL]);
 
-  // පූරණය වන විට සහ සෑම තත්පර 30කට වරක් balance එක අලුත් කිරීම
   useEffect(() => {
-    if (currentUser?.uid) {
-      syncBalance();
-      const interval = setInterval(syncBalance, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [currentUser?.uid, syncBalance]);
+    syncBalance();
+    const interval = setInterval(syncBalance, 30000);
+    return () => clearInterval(interval);
+  }, [syncBalance]);
 
   const handleExecute = async () => {
-    // 1. Validation
     if (!link.trim() || !link.includes('whatsapp.com/channel/')) {
       setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_CHANNEL_LINK' });
       return;
     }
 
     if (!currentUser?.uid) {
-      setStatus({ type: 'error', msg: 'USER_SESSION_NOT_FOUND' });
+      setStatus({ type: 'error', msg: 'USER_AUTH_SESSION_EXPIRED' });
       return;
     }
 
@@ -81,7 +76,6 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 2. Deduction Protocol
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,15 +87,12 @@ export default function WhatsAppBoostView({
       });
 
       const deductData = await deductRes.json();
-
       if (!deductRes.ok || !deductData.success) {
         throw new Error(deductData.error || "BALANCE_DEDUCTION_FAILED");
       }
 
-      // 3. Update local balance immediately after deduction
       await syncBalance(); 
 
-      // 4. Bot API Signal Injection
       const botRes = await fetch(BOT_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -121,8 +112,6 @@ export default function WhatsAppBoostView({
           msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT!` 
         });
         setLink('');
-        
-        // Dashboard එකේ state එකත් refresh කරන්න props call කරනවා
         fetchBalance(currentUser.uid);
         fetchHistory(currentUser.uid);
       } else {
@@ -139,10 +128,11 @@ export default function WhatsAppBoostView({
   };
 
   return (
-    <div className="animate-fade-in pt-24 pb-10 px-4">
+    /* pt-24 ඉවත් කර සාමාන්‍ය padding එකක් ලබා දුන්නා එවිට Header එක යටින් පටන් ගනී */
+    <div className="animate-fade-in py-8 px-4 w-full min-h-screen">
       <div className="max-w-md mx-auto bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl backdrop-blur-md">
         
-        {/* Header Section */}
+        {/* Header - Card ඇතුළත header එක */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex justify-between items-start mb-4">
              <div>
@@ -154,7 +144,6 @@ export default function WhatsAppBoostView({
                 </h2>
              </div>
              
-             {/* Live Wallet View */}
              <div className="flex flex-col items-end">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Available_Credits</span>
                 <div className="flex items-center gap-2 bg-blue-600/10 border border-blue-600/20 px-3 py-1 rounded-full">
@@ -166,7 +155,7 @@ export default function WhatsAppBoostView({
         </div>
 
         <div className="p-8 space-y-6">
-          {/* Service Selector */}
+          {/* Selector */}
           <div className="grid grid-cols-1 gap-3">
             <button 
               onClick={() => setType('follow')}
@@ -205,7 +194,7 @@ export default function WhatsAppBoostView({
             </button>
           </div>
 
-          {/* Target URL Input */}
+          {/* Input */}
           <div className="relative group">
             <label className="absolute left-5 -top-2 px-2 bg-white dark:bg-[#0f172a] text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 z-10">
               Target_Protocol_URL
@@ -219,7 +208,7 @@ export default function WhatsAppBoostView({
             />
           </div>
 
-          {/* Status Alert */}
+          {/* Status Display */}
           {status && (
             <div className={`flex items-center gap-3 p-4 rounded-2xl border ${
               status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
@@ -229,25 +218,14 @@ export default function WhatsAppBoostView({
             </div>
           )}
 
-          {/* Action Button */}
           <button
             onClick={handleExecute}
             disabled={loading || !link}
             className={`w-full relative py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all active:scale-[0.98] disabled:opacity-30 ${
-              type === 'follow' ? 'bg-emerald-600 shadow-emerald-600/20' : 'bg-blue-600 shadow-blue-600/20'
+              type === 'follow' ? 'bg-emerald-600' : 'bg-blue-600'
             } text-white shadow-xl`}
           >
-            {loading ? (
-              <div className="flex items-center justify-center gap-3">
-                <Loader2 size={14} className="animate-spin" />
-                <span>INJECTING_SIGNAL...</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <span>EXECUTE_STRIKE</span>
-                <ChevronRight size={14} />
-              </div>
-            )}
+            {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "EXECUTE_STRIKE"}
           </button>
         </div>
       </div>
