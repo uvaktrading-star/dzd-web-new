@@ -33,10 +33,8 @@ export default function WhatsAppBoostView({
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // Balance එක sync කරන function එක
   const syncBalance = useCallback(async () => {
     if (!currentUser?.uid || !WORKER_URL) return;
-    
     try {
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${currentUser.uid}`);
       if (!response.ok) throw new Error("Sync failed");
@@ -128,11 +126,13 @@ export default function WhatsAppBoostView({
   };
 
   return (
-    /* pt-24 ඉවත් කර සාමාන්‍ය padding එකක් ලබා දුන්නා එවිට Header එක යටින් පටන් ගනී */
-    <div className="animate-fade-in py-8 px-4 w-full min-h-screen">
+    /* මෙහි pt-24 සහ min-h-screen ඉවත් කර layout එක නිවැරදි කළා. 
+       Dashboard container එකට හිරවෙන ලෙස relative position ලබා දුන්නා.
+    */
+    <div className="w-full h-full overflow-y-auto animate-fade-in py-6 px-4 pb-24">
       <div className="max-w-md mx-auto bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl backdrop-blur-md">
         
-        {/* Header - Card ඇතුළත header එක */}
+        {/* Header - Card Heading */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex justify-between items-start mb-4">
              <div>
@@ -155,7 +155,7 @@ export default function WhatsAppBoostView({
         </div>
 
         <div className="p-8 space-y-6">
-          {/* Selector */}
+          {/* Service Selection */}
           <div className="grid grid-cols-1 gap-3">
             <button 
               onClick={() => setType('follow')}
@@ -194,7 +194,7 @@ export default function WhatsAppBoostView({
             </button>
           </div>
 
-          {/* Input */}
+          {/* Input Box */}
           <div className="relative group">
             <label className="absolute left-5 -top-2 px-2 bg-white dark:bg-[#0f172a] text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 z-10">
               Target_Protocol_URL
@@ -208,7 +208,7 @@ export default function WhatsAppBoostView({
             />
           </div>
 
-          {/* Status Display */}
+          {/* Alert Display */}
           {status && (
             <div className={`flex items-center gap-3 p-4 rounded-2xl border ${
               status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
