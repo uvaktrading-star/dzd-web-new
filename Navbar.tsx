@@ -117,7 +117,6 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
               <a href="/terms-of-service" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors">Terms of Service</a>
               <Link to="/Contact" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Contact Us</Link>
               <Link to="/Support" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Support</Link>
-              <Link to="/wa-boost" className="text-slate-500 dark:text-slate-400 hover:text-blue-600">Wa boost</Link>
             </div>
 
             {/* Desktop Right Section */}
@@ -251,7 +250,6 @@ export default function Navbar({ theme, toggleTheme, user, onLogout, onLoginClic
                   <NavItem icon={<FileText size={16} />} label="Terms of Service" onClick={() => handleNavigation('/terms-of-service')} />
                   <NavItem icon={<Mail size={16} />} label="Contact Us" onClick={() => handleNavigation('/contact')} />
                   <NavItem icon={<HelpCircle size={16} />} label="Support" onClick={() => handleNavigation('/support')} />
-                  <NavItem icon={<HelpCircle size={16} />} label="Wa boost" onClick={() => handleNavigation('/wa-boost')} />
                 </div>
               </div>
               
