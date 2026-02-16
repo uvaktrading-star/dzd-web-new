@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Zap, 
   Smartphone, 
   ChevronRight, 
   AlertCircle, 
@@ -8,22 +7,20 @@ import {
   Loader2,
   Heart,
   UserPlus,
-  Wallet,
   X 
 } from 'lucide-react';
 
 interface WhatsAppBoostProps {
   currentUser: any;
-  userBalance: any;
   WORKER_URL: string;
+  onClose?: () => void;
+  // මේ පහත ඒවා Navbar එකෙත් refresh වෙන්න අවශ්‍ය නිසා තබා ගත්තා
   fetchBalance: (uid: string) => void;
   fetchHistory: (uid: string) => void;
-  onClose?: () => void;
 }
 
 export default function WhatsAppBoostView({ 
   currentUser, 
-  userBalance, 
   WORKER_URL, 
   fetchBalance,
   fetchHistory,
@@ -33,48 +30,40 @@ export default function WhatsAppBoostView({
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
-  const [liveBalance, setLiveBalance] = useState("0.00");
   
-  // Interval එක handle කරන්න ref එකක්
-  const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  // Navbar එකේ වගේම balance එක තබා ගැනීමට state එකක්
+  const [navBalance, setNavBalance] = useState("0.00");
 
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // --- 1. Data Refresh Logic ---
-  const refreshUserData = useCallback(() => {
+  // --- 1. Navbar එකේ ඔයා එවපු ඒ ලොජික් එකම මෙතනට (Polling Logic) ---
+  const fetchLiveStats = async (uid: string) => {
+    try {
+      const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
+      const data = await response.json();
+      // Balance එක update කිරීම
+      setNavBalance(parseFloat(data.total_balance || 0).toFixed(2));
+      
+      // ප්‍රධාන App එකේ state එකත් sync කරන්න (අත්‍යවශ්‍ය නම් පමණි)
+      fetchBalance(uid); 
+    } catch (error) {
+      console.error("WhatsAppBoost sync error:", error);
+    }
+  };
+
+  useEffect(() => {
     if (currentUser?.uid) {
-      // Parent එකේ තියෙන functions හරහා අලුත් data fetch කරනවා
-      fetchBalance(currentUser.uid);
-      fetchHistory(currentUser.uid);
+      // පළමු වතාවට fetch කිරීම
+      fetchLiveStats(currentUser.uid);
+      
+      // තත්පර 30න් 30ට auto update වීම
+      const interval = setInterval(() => fetchLiveStats(currentUser.uid), 30000);
+      
+      return () => clearInterval(interval);
     }
-  }, [currentUser, fetchBalance, fetchHistory]);
-
-  // --- 2. Auto Polling Logic (සෑම තත්පර 30කටම) ---
-  useEffect(() => {
-    // Component එක load වෙද්දී මුලින්ම refresh කරනවා
-    refreshUserData();
-
-    // සෑම තත්පර 30කට වරක්ම refreshUserData function එක run කරනවා
-    pollingInterval.current = setInterval(() => {
-      console.log("Auto-syncing balance..."); // Debugging සඳහා
-      refreshUserData();
-    }, 30000); // 30 Seconds
-
-    // Component එක වැසූ විට (Unmount) interval එක නතර කරනවා
-    return () => {
-      if (pollingInterval.current) {
-        clearInterval(pollingInterval.current);
-      }
-    };
-  }, [refreshUserData]);
-
-  // --- 3. Sync UI with Prop Changes ---
-  useEffect(() => {
-    if (userBalance?.total_balance !== undefined) {
-      setLiveBalance(parseFloat(userBalance.total_balance).toFixed(2));
-    }
-  }, [userBalance]);
+  }, [currentUser]);
+  // ------------------------------------------------------------
 
   const handleExecute = async () => {
     if (!link.includes('whatsapp.com/channel/')) {
@@ -83,7 +72,7 @@ export default function WhatsAppBoostView({
     }
 
     const cost = type === 'follow' ? 35 : 5;
-    const currentBal = parseFloat(liveBalance);
+    const currentBal = parseFloat(navBalance);
 
     if (currentBal < cost) {
       setStatus({ type: 'error', msg: 'INSUFFICIENT_CREDITS_IN_CORE' });
@@ -94,6 +83,7 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
+      // STEP 1: සල්ලි කැපීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,9 +97,12 @@ export default function WhatsAppBoostView({
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        // සල්ලි කැපුන ගමන් වහාම fetch කරනවා (තත්පර 30ක් ඉන්න ඕන නෑ)
-        refreshUserData();
+        
+        // සල්ලි කැපුන ගමන්ම balance එක fetch කරන්න (තත්පර 30ක් ඉන්න ඕන නෑ)
+        fetchLiveStats(currentUser.uid);
+        fetchHistory(currentUser.uid);
 
+        // STEP 2: බොට් එකට signal එක යැවීම
         const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -142,12 +135,12 @@ export default function WhatsAppBoostView({
       setStatus({ type: 'error', msg: err.message || "PROTOCOL_FAULT" });
     } finally {
       setLoading(false);
-      refreshUserData(); // අවසානයේත් refresh කරනවා
     }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Background Blur Overlay */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
         onClick={onClose}
@@ -155,6 +148,7 @@ export default function WhatsAppBoostView({
 
       <div className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         
+        {/* Close Button */}
         <button 
           onClick={onClose}
           className="absolute right-6 top-6 p-2 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors z-20"
@@ -162,6 +156,7 @@ export default function WhatsAppBoostView({
           <X size={20} />
         </button>
 
+        {/* Header Section */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex justify-between items-start mb-4">
               <div>
@@ -173,29 +168,31 @@ export default function WhatsAppBoostView({
                 </h2>
               </div>
               
+              {/* Live Wallet Balance UI */}
               <div className="flex flex-col items-end mr-8">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Available_Credits</span>
                 <div className="flex items-center gap-2 bg-blue-600/10 border border-blue-600/20 px-3 py-1 rounded-full shadow-sm">
                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
-                   <span className="text-xs font-black text-blue-600 tracking-tight">LKR {liveBalance}</span>
+                   <span className="text-xs font-black text-blue-600">LKR {navBalance}</span>
                 </div>
               </div>
           </div>
         </div>
 
         <div className="p-8 space-y-6">
+          {/* Service Buttons */}
           <div className="grid grid-cols-1 gap-3">
             <button 
               onClick={() => { setType('follow'); setStatus(null); }}
               className={`flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${
-                type === 'follow' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
+                type === 'follow' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-100 dark:border-white/5'
               }`}
             >
-              <div className={`p-3 rounded-2xl ${type === 'follow' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`p-3 rounded-2xl ${type === 'follow' ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <UserPlus size={18} />
               </div>
               <div className="text-left">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Newsletter</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Newsletter</p>
                 <p className="font-bold text-slate-900 dark:text-white text-sm">Followers Boost</p>
                 <p className="text-xs font-black text-emerald-500 mt-0.5">LKR 35.00</p>
               </div>
@@ -204,14 +201,14 @@ export default function WhatsAppBoostView({
             <button 
               onClick={() => { setType('react'); setStatus(null); }}
               className={`flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${
-                type === 'react' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
+                type === 'react' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5'
               }`}
             >
-              <div className={`p-3 rounded-2xl ${type === 'react' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`p-3 rounded-2xl ${type === 'react' ? 'bg-blue-500 text-white shadow-lg' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Heart size={18} />
               </div>
               <div className="text-left">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Reaction</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Reaction</p>
                 <p className="font-bold text-slate-900 dark:text-white text-sm">Mass Reactions</p>
                 <p className="text-xs font-black text-blue-500 mt-0.5">LKR 5.00</p>
               </div>
@@ -232,7 +229,7 @@ export default function WhatsAppBoostView({
           </div>
 
           {status && (
-            <div className={`flex items-center gap-3 p-4 rounded-2xl border animate-in slide-in-from-top-2 duration-300 ${
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border animate-in slide-in-from-top-1 duration-300 ${
               status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
             }`}>
               {status.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
