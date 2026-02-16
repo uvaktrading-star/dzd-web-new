@@ -22,7 +22,7 @@ import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
 import Footer from './Footer';
 // WhatsApp Boost View Import
-import WhatsAppBoostView from './WhatsAppBoostView'; 
+import WaBoost from './WhatsAppBoostView'; 
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
