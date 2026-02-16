@@ -1,183 +1,239 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Navigate, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  ChevronLeft, 
+  Smartphone, 
   ChevronRight, 
-  LayoutGrid, 
-  List, 
-  History, 
-  Wallet,
-  Activity,
-  Ticket,
-  Zap
+  AlertCircle, 
+  CheckCircle2, 
+  Loader2,
+  Heart,
+  UserPlus,
+  Wallet
 } from 'lucide-react';
-import DashboardHomeView from './DashboardHomeView';
-import ServicesPageView from './ServicesPageView';
-import OrdersPageView from './OrdersPageView';
-import Tickets from './Tickets';
-import WalletPage from './wallet/BillingPageView';
 
-// Navbar එකේ පාවිච්චි කරන URL එකම මෙතනටත් ගන්නවා
-const WORKER_URL = import.meta.env.VITE_WORKER_URL;
+interface WhatsAppBoostProps {
+  currentUser: any;
+  userBalance: any;
+  WORKER_URL: string;
+  fetchBalance: (uid: string) => void;
+  fetchHistory: (uid: string) => void;
+}
 
-export default function DashboardPage({ user }: any) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const mainRef = useRef<HTMLDivElement>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  
-  // Balance States (Navbar එකට සමානයි)
+export default function WhatsAppBoostView({ 
+  currentUser, 
+  WORKER_URL, 
+  fetchBalance,
+  fetchHistory 
+}: WhatsAppBoostProps) {
+  const [loading, setLoading] = useState(false);
+  const [link, setLink] = useState('');
+  const [type, setType] = useState<'follow' | 'react'>('follow');
+  const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
   const [navBalance, setNavBalance] = useState("0.00");
-  const [loadingBalance, setLoadingBalance] = useState(false);
 
-  // Get current tab from URL path
-  const getCurrentTabFromPath = () => {
-    const path = location.pathname.split('/').pop() || 'home';
-    const validTabs = ['home', 'services', 'orders', 'wallet', 'tickets'];
-    return validTabs.includes(path) ? path : 'home';
-  };
+  const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
+  const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  const [activeTab, setActiveTab] = useState(getCurrentTabFromPath());
-
-  // Update active tab when URL changes
-  useEffect(() => {
-    setActiveTab(getCurrentTabFromPath());
-  }, [location.pathname]);
-
-  // --- Navbar එකේ Balance Logic එක මෙතනට ---
-  const fetchLiveStats = async (uid: string) => {
-    if (!uid) return;
-    setLoadingBalance(true);
+  // Balance එක sync කරන function එක safe විදියට හැදුවා
+  const syncBalance = useCallback(async () => {
+    if (!currentUser?.uid || !WORKER_URL) return;
+    
     try {
-      // Navbar එකේ පාවිච්චි කරන API endpoint එකමයි මෙතනත් තියෙන්නේ
-      const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
+      const response = await fetch(`${WORKER_URL}/get-balance?userId=${currentUser.uid}`);
+      if (!response.ok) throw new Error("Sync failed");
       const data = await response.json();
       setNavBalance(parseFloat(data.total_balance || 0).toFixed(2));
     } catch (error) {
-      console.error("Dashboard balance sync error:", error);
-    } finally {
-      setLoadingBalance(false);
+      console.error("Balance sync error:", error);
     }
-  };
+  }, [currentUser?.uid, WORKER_URL]);
 
   useEffect(() => {
-    if (user?.uid) {
-      fetchLiveStats(user.uid);
-      // තත්පර 30කට සැරයක් auto-update වෙනවා
-      const interval = setInterval(() => fetchLiveStats(user.uid), 30000);
-      return () => clearInterval(interval);
+    syncBalance();
+    const interval = setInterval(syncBalance, 30000);
+    return () => clearInterval(interval);
+  }, [syncBalance]);
+
+  const handleExecute = async () => {
+    // 1. Validation
+    if (!link.trim() || !link.includes('whatsapp.com/channel/')) {
+      setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_CHANNEL_LINK' });
+      return;
     }
-  }, [user]);
 
+    if (!currentUser?.uid) {
+      setStatus({ type: 'error', msg: 'USER_AUTH_SESSION_EXPIRED' });
+      return;
+    }
 
-  const renderContent = () => {
-    // Balance එක LKR format එකට Dashboard views වලට යවනවා
-    switch (activeTab) {
-      case 'home':
-        return <DashboardHomeView user={user} balance={navBalance} />;
-      case 'services':
-        return <ServicesPageView scrollContainerRef={mainRef} />;
-      case 'orders':
-        return <OrdersPageView scrollContainerRef={mainRef} />;
-      case 'tickets':
-        return <Tickets scrollContainerRef={mainRef} />;
-      case 'wallet':
-        return <WalletPage user={user} scrollContainerRef={mainRef} />;
-      default:
-        return null;
+    const cost = type === 'follow' ? 35 : 5;
+    const currentBal = parseFloat(navBalance);
+
+    if (currentBal < cost) {
+      setStatus({ type: 'error', msg: 'INSUFFICIENT_CREDITS_IN_CORE' });
+      return;
+    }
+
+    setLoading(true);
+    setStatus(null);
+
+    try {
+      // 2. Deduction Protocol
+      const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.uid,
+          amount: cost,
+          service: `WhatsApp ${type === 'follow' ? 'Followers' : 'Reactions'}`
+        })
+      });
+
+      const deductData = await deductRes.json();
+
+      if (!deductRes.ok || !deductData.success) {
+        throw new Error(deductData.error || "BALANCE_DEDUCTION_FAILED");
+      }
+
+      // 3. Update Balance immediately after deduction
+      await syncBalance(); 
+
+      // 4. Bot API Injection
+      const botRes = await fetch(BOT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: BOT_AUTH_KEY,
+          type: type,
+          link: link.trim(),
+          emojis: ["❤️", "🔥", "👍", "✨", "💙"]
+        })
+      });
+
+      const botData = await botRes.json();
+
+      if (botRes.ok && botData.success) {
+        setStatus({ 
+          type: 'success', 
+          msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT!` 
+        });
+        setLink('');
+        // Global refresh
+        fetchBalance(currentUser.uid);
+        fetchHistory(currentUser.uid);
+      } else {
+        setStatus({ 
+          type: 'error', 
+          msg: `BOT_REJECTED: ${botData.message || 'SERVICE_OFFLINE'}` 
+        });
+      }
+    } catch (err: any) {
+      setStatus({ type: 'error', msg: err.message || "PROTOCOL_FAULT" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-dark pt-20 overflow-hidden font-sans">
-      
-      {/* DESKTOP SIDEBAR */}
-      <aside 
-        className={`hidden md:flex relative z-40 bg-white dark:bg-[#050b1a] border-r border-slate-200 dark:border-white/5 transition-all duration-500 ease-in-out flex-col ${sidebarOpen ? 'w-80' : 'w-24'}`}
-      >
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-4 top-10 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-110 active:scale-90 transition-all z-50 border-4 border-slate-50 dark:border-dark"
-        >
-          {sidebarOpen ? <ChevronLeft size={14} strokeWidth={3} /> : <ChevronRight size={14} strokeWidth={3} />}
-        </button>
-
-        <div className="flex-1 py-10 px-4 space-y-2 overflow-y-auto no-scrollbar">
-          {menuItems.map(item => (
-            <button 
-              key={item.id}
-              onClick={() => handleTabChange(item.id, item.path)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-2xl shadow-blue-600/30' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}
-            >
-              <div className={`shrink-0 transition-transform group-hover:scale-110 ${activeTab === item.id ? 'text-white' : item.color}`}>
-                {React.cloneElement(item.icon as any, { size: 24, strokeWidth: activeTab === item.id ? 2.5 : 2 })}
-              </div>
-              {sidebarOpen && (
-                <span className="font-black uppercase tracking-[0.15em] text-[10px] whitespace-nowrap opacity-100 transition-opacity">
-                  {item.label}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* BOTTOM BALANCE CARD IN SIDEBAR (Optional) */}
-        {sidebarOpen && (
-          <div className="p-4 border-t border-slate-100 dark:border-white/5">
-             <div className="bg-gradient-to-br from-blue-600/5 to-blue-600/10 rounded-2xl p-4 border border-blue-600/10">
-               <div className="flex items-center justify-between">
-                 <div>
-                   <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1 flex items-center gap-1">
-                     <Activity size={8} className={loadingBalance ? 'animate-pulse' : ''} />
-                     WALLET_LKR
-                   </p>
-                   <p className="text-lg font-black text-slate-900 dark:text-white">Rs.{navBalance}</p>
-                 </div>
-                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                   <Zap size={14} fill="currentColor" />
-                 </div>
-               </div>
+    <div className="animate-fade-in pt-24 pb-10 px-4">
+      <div className="max-w-md mx-auto bg-white dark:bg-[#0f172a]/60 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-2xl backdrop-blur-md">
+        
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+          <div className="flex justify-between items-start mb-4">
+             <div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-1 flex items-center gap-2">
+                  <Smartphone size={12} /> External_Node
+                </h3>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">
+                  WA Protocol
+                </h2>
+             </div>
+             
+             <div className="flex flex-col items-end">
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Available_Credits</span>
+                <div className="flex items-center gap-2 bg-blue-600/10 border border-blue-600/20 px-3 py-1 rounded-full">
+                   <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
+                   <span className="text-xs font-black text-blue-600">LKR {navBalance}</span>
+                </div>
              </div>
           </div>
-        )}
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <main
-        ref={mainRef}
-        className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-8 lg:p-12 relative pb-32 md:pb-12 bg-[#fcfdfe] dark:bg-[#020617]"
-      >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none"></div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          {renderContent()}
         </div>
-      </main>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-white dark:bg-[#050b1a] border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-2 z-50">
-        {menuItems.map(item => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleTabChange(item.id, item.path)}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
-                isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'
+        <div className="p-8 space-y-6">
+          {/* Selector */}
+          <div className="grid grid-cols-1 gap-3">
+            <button 
+              onClick={() => setType('follow')}
+              className={`flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${
+                type === 'follow' 
+                ? 'border-emerald-500 bg-emerald-500/5' 
+                : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
               }`}
             >
-              {React.cloneElement(item.icon as any, {
-                size: 20,
-                strokeWidth: isActive ? 2.5 : 2
-              })}
-              <span className={`text-[10px] mt-1 font-semibold tracking-wide ${isActive ? 'opacity-100' : 'opacity-80'}`}>
-                {item.label.split(' ')[0]}
-              </span>
+              <div className={`p-3 rounded-2xl ${type === 'follow' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                <UserPlus size={18} />
+              </div>
+              <div className="text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Newsletter</p>
+                <p className="font-bold text-slate-900 dark:text-white text-sm">Followers Boost</p>
+                <p className="text-xs font-black text-emerald-500 mt-0.5">LKR 35.00</p>
+              </div>
             </button>
-          );
-        })}
-      </nav>
+
+            <button 
+              onClick={() => setType('react')}
+              className={`flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${
+                type === 'react' 
+                ? 'border-blue-500 bg-blue-500/5' 
+                : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
+              }`}
+            >
+              <div className={`p-3 rounded-2xl ${type === 'react' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                <Heart size={18} />
+              </div>
+              <div className="text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">Reaction</p>
+                <p className="font-bold text-slate-900 dark:text-white text-sm">Mass Reactions</p>
+                <p className="text-xs font-black text-blue-500 mt-0.5">LKR 5.00</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Input */}
+          <div className="relative group">
+            <label className="absolute left-5 -top-2 px-2 bg-white dark:bg-[#0f172a] text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 z-10">
+              Target_Protocol_URL
+            </label>
+            <input 
+              type="text"
+              placeholder="https://whatsapp.com/channel/..."
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-all shadow-inner"
+            />
+          </div>
+
+          {/* Status Display */}
+          {status && (
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border ${
+              status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
+            }`}>
+              {status.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              <p className="text-[9px] font-black uppercase tracking-widest">{status.msg}</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleExecute}
+            disabled={loading || !link}
+            className={`w-full relative py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all active:scale-[0.98] disabled:opacity-30 ${
+              type === 'follow' ? 'bg-emerald-600' : 'bg-blue-600'
+            } text-white shadow-xl`}
+          >
+            {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "EXECUTE_STRIKE"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
