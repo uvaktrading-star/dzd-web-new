@@ -15,20 +15,18 @@ interface WhatsAppBoostProps {
   user: any; 
   WORKER_URL: string;
   onBack?: () => void;
-  fetchBalance: (uid: string) => void;
-  fetchHistory: (uid: string) => void;
+  fetchBalance: (uid: string) => void; 
 }
 
 export default function WhatsAppBoostView({ 
   user, 
   WORKER_URL, 
-  fetchBalance: syncMainBalance, 
-  fetchHistory,
+  fetchBalance: syncAppBalance, // Main Navbar sync එක සඳහා
   onBack
 }: WhatsAppBoostProps) {
   
-  // Dashboard එකේ තියෙන විදියටම states ටික
-  const [userBalance, setUserBalance] = useState("0.00");
+  // Worker එකේ data structure එකට අනුව "0.00" ලෙස ආරම්භ කළා
+  const [totalBalance, setTotalBalance] = useState<string>("0.00");
   const [loading, setLoading] = useState({
     balance: false,
     executing: false
@@ -41,48 +39,49 @@ export default function WhatsAppBoostView({
   const BOT_API_URL = "https://akash-01-3d86d272b644.herokuapp.com/api/boost";
   const BOT_AUTH_KEY = "ZANTA_BOOST_KEY_99";
 
-  // --- Dashboard එකේ 'fetchBalance' Function එක 1:1 මෙතනට ---
-  const fetchBalance = useCallback(async (uid: string) => {
+  // --- Worker එකෙන් Balance එක ගෙන ඒම ---
+  const refreshBalance = useCallback(async (uid: string) => {
+    if (!uid) return;
     setLoading(prev => ({ ...prev, balance: true }));
     try {
       const response = await fetch(`${WORKER_URL}/get-balance?userId=${uid}`);
       const data = await response.json();
-      // Dashboard එකේ දත්ත update කරන විදියටම
-      setUserBalance(parseFloat(data.total_balance || 0).toFixed(2));
       
-      // Main Navbar එකත් update වෙන්න මේක ඕනේ
-      syncMainBalance(uid); 
+      // Worker එකේ එවන්නේ total_balance නිසා එය set කරන්න
+      const currentBal = parseFloat(data.total_balance || 0).toFixed(2);
+      setTotalBalance(currentBal);
+      
+      // App එකේ අනෙක් තැන්වලටත් (Navbar) දැනුම් දීම
+      syncAppBalance(uid);
     } catch (error) {
-      console.error("Error fetching balance:", error);
+      console.error("Balance fetch error:", error);
     } finally {
       setLoading(prev => ({ ...prev, balance: false }));
     }
-  }, [WORKER_URL, syncMainBalance]);
+  }, [WORKER_URL, syncAppBalance]);
 
-  // --- Dashboard එකේ useEffect එක මෙතනට ---
+  // පළමු වතාවට සහ සෑම තත්පර 30කට වරක්ම update කිරීම
   useEffect(() => {
     if (user?.uid) {
-      // පළමු වතාවට load කිරීම
-      fetchBalance(user.uid);
-      
-      // තත්පර 30න් 30ට auto-refresh වීම (Dashboard එකේ logic එක)
-      const balanceInterval = setInterval(() => fetchBalance(user.uid), 30000);
-      
-      return () => clearInterval(balanceInterval);
+      refreshBalance(user.uid);
+      const interval = setInterval(() => refreshBalance(user.uid), 30000);
+      return () => clearInterval(interval);
     }
-  }, [user, fetchBalance]);
+  }, [user?.uid, refreshBalance]);
 
   const handleExecute = async () => {
+    // 1. Link Validation
     if (!link.includes('whatsapp.com/channel/')) {
-      setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_CHANNEL_LINK' });
+      setStatus({ type: 'error', msg: 'INVALID_WHATSAPP_LINK_PROTOCOL' });
       return;
     }
 
     const cost = type === 'follow' ? 35 : 5;
-    const currentBal = parseFloat(userBalance);
+    const currentBal = parseFloat(totalBalance);
 
+    // 2. Local Balance Check
     if (currentBal < cost) {
-      setStatus({ type: 'error', msg: 'INSUFFICIENT_CREDITS_IN_CORE' });
+      setStatus({ type: 'error', msg: 'INSUFFICIENT_FUNDS_IN_NODE' });
       return;
     }
 
@@ -90,25 +89,24 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. සල්ලි කැපීම
+      // 3. Worker එකෙන් සල්ලි කැපීම
       const deductRes = await fetch(`${WORKER_URL}/deduct-balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.uid,
-          amount: cost,
-          service: `WhatsApp ${type === 'follow' ? 'Followers' : 'Reactions'}`
+          amount: cost
         })
       });
 
       const deductData = await deductRes.json();
 
       if (deductRes.ok && deductData.success) {
-        // සල්ලි කැපුන ගමන්ම Dashboard එකේ වගේ Balance එක refresh කරනවා
-        await fetchBalance(user.uid);
-        fetchHistory(user.uid);
+        // --- වැදගත්ම කොටස: සල්ලි කැපුන ගමන්ම Worker එක දුන්න අලුත් balance එක screen එකට දැමීම ---
+        setTotalBalance(parseFloat(deductData.newBalance).toFixed(2));
+        syncAppBalance(user.uid);
 
-        // 2. BOT එකට signal එක යැවීම
+        // 4. Bot එකට Signal එක යැවීම
         const botRes = await fetch(BOT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -123,109 +121,107 @@ export default function WhatsAppBoostView({
         const botData = await botRes.json();
 
         if (botRes.ok && botData.success) {
-          setStatus({ type: 'success', msg: `NODE_INJECTED: ${type.toUpperCase()} SIGNAL SENT!` });
+          setStatus({ type: 'success', msg: `SYNC_COMPLETE: ${type.toUpperCase()} DEPLOYED` });
           setLink('');
         } else {
-          setStatus({ type: 'error', msg: `BOT_REJECTED: ${botData.message || 'UNKNOWN_ERROR'}` });
+          // Bot එක fail වුනත් සල්ලි කැපී අවසානයි (Worker එකේ code එක අනුව)
+          setStatus({ type: 'error', msg: `NODE_ERROR: ${botData.message || 'BOT_RESPONSE_FAILED'}` });
         }
       } else {
-        throw new Error(deductData.error || "BALANCE_DEDUCTION_FAILED");
+        throw new Error(deductData.error || "GATEWAY_DEDUCTION_FAILED");
       }
     } catch (err: any) {
-      setStatus({ type: 'error', msg: err.message || "PROTOCOL_FAULT" });
+      setStatus({ type: 'error', msg: `CRITICAL_ERROR: ${err.message}` });
     } finally {
       setLoading(prev => ({ ...prev, executing: false }));
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-24 pb-12 px-4 animate-fade-in transition-colors duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] pt-24 pb-12 px-4 animate-fade-in transition-colors">
       <div className="max-w-xl mx-auto">
         
+        {/* Header Section */}
         <div className="flex items-center justify-between mb-8 px-2">
-          <button 
-            onClick={onBack}
-            className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-all shadow-sm active:scale-95"
-          >
+          <button onClick={onBack} className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-all shadow-sm active:scale-95">
             <ArrowLeft size={20} />
           </button>
           <div className="text-right">
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">WhatsApp Boost</h1>
-            <p className="text-[10px] font-bold text-emerald-500 tracking-[0.2em] uppercase">Deployment Node</p>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">ZANTA STRIKE</h1>
+            <p className="text-[10px] font-bold text-blue-500 tracking-[0.2em] uppercase">WhatsApp Injection Node</p>
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#0f172a]/60 rounded-[3rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
           
-          {/* Balance Section - Dashboard එකේ කාඩ් එකට සමානයි */}
+          {/* Real-time Wallet Section */}
           <div className="px-8 py-7 bg-slate-50/50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
                 <Wallet size={20} />
               </div>
               <div>
-                <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">
-                  Available Balance
-                </p>
+                <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-0.5">Wallet Balance</p>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
-                  LKR {userBalance}
+                  LKR {totalBalance}
                 </h3>
               </div>
             </div>
-
-            <span className="text-[8px] font-black text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg uppercase tracking-[0.15em]">
-              {loading.balance ? 'Syncing...' : 'Live Sync'}
+            <span className={`text-[8px] font-black px-3 py-1.5 rounded-lg uppercase tracking-[0.15em] transition-all ${
+              loading.balance ? 'bg-blue-500/10 text-blue-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500'
+            }`}>
+              {loading.balance ? 'Syncing...' : 'Live Node'}
             </span>
           </div>
 
           <div className="p-8 space-y-8">
+            {/* Service Selection */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Operation_Type</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Strike_Target_Type</label>
+              <div className="grid grid-cols-2 gap-4">
                 <button 
-                  onClick={() => { setType('follow'); setStatus(null); }}
-                  className={`relative p-5 rounded-[2rem] border-2 transition-all active:scale-[0.97] ${
-                    type === 'follow' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-transparent'
-                  }`}
+                  onClick={() => setType('follow')}
+                  className={`p-5 rounded-[2rem] border-2 transition-all ${type === 'follow' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-transparent opacity-60'}`}
                 >
-                  <UserPlus className={`mb-3 ${type === 'follow' ? 'text-emerald-500' : 'text-slate-400'}`} size={24} />
-                  <p className="font-black text-slate-900 dark:text-white text-sm">Followers</p>
-                  <p className="text-[10px] font-bold text-emerald-500 mt-1 uppercase tracking-wider">LKR 35.00</p>
+                  <UserPlus className={`mb-2 ${type === 'follow' ? 'text-emerald-500' : 'text-slate-400'}`} size={20} />
+                  <p className="font-black text-slate-900 dark:text-white text-[12px]">Followers</p>
+                  <p className="text-[9px] font-bold text-emerald-500 mt-1 uppercase italic">LKR 35.00</p>
                 </button>
 
                 <button 
-                  onClick={() => { setType('react'); setStatus(null); }}
-                  className={`relative p-5 rounded-[2rem] border-2 transition-all active:scale-[0.97] ${
-                    type === 'react' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-transparent'
-                  }`}
+                  onClick={() => setType('react')}
+                  className={`p-5 rounded-[2rem] border-2 transition-all ${type === 'react' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-transparent opacity-60'}`}
                 >
-                  <Heart className={`mb-3 ${type === 'react' ? 'text-blue-500' : 'text-slate-400'}`} size={24} />
-                  <p className="font-black text-slate-900 dark:text-white text-sm">Reactions</p>
-                  <p className="text-[10px] font-bold text-blue-500 mt-1 uppercase tracking-wider">LKR 5.00</p>
+                  <Heart className={`mb-2 ${type === 'react' ? 'text-blue-500' : 'text-slate-400'}`} size={20} />
+                  <p className="font-black text-slate-900 dark:text-white text-[12px]">Reactions</p>
+                  <p className="text-[9px] font-bold text-blue-500 mt-1 uppercase italic">LKR 5.00</p>
                 </button>
               </div>
             </div>
 
+            {/* Target Input */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Channel_Protocol_Link</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Channel_Endpoint_URL</label>
               <input 
                 type="text"
                 placeholder="https://whatsapp.com/channel/..."
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-[1.5rem] py-5 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:ring-2 ring-blue-500/20 transition-all shadow-inner"
+                className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-[1.5rem] py-5 px-6 font-bold text-sm text-slate-900 dark:text-white outline-none focus:ring-2 ring-blue-500/20 transition-all"
               />
             </div>
 
+            {/* Status Feedback */}
             {status && (
               <div className={`flex items-center gap-4 p-5 rounded-[1.5rem] border animate-in slide-in-from-bottom-2 duration-300 ${
                 status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
               }`}>
-                {status.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-                <p className="text-xs font-black uppercase tracking-widest">{status.msg}</p>
+                {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                <p className="text-[10px] font-black uppercase tracking-widest">{status.msg}</p>
               </div>
             )}
 
+            {/* Execute Strike Button */}
             <button
               onClick={handleExecute}
               disabled={loading.executing || !link}
@@ -236,11 +232,11 @@ export default function WhatsAppBoostView({
               {loading.executing ? (
                 <div className="flex items-center justify-center gap-3">
                   <Loader2 size={18} className="animate-spin" />
-                  <span>Deploying...</span>
+                  <span>Transmitting...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span>Execute Strike</span>
+                  <span>DEPLOY STRIKE</span>
                   <ChevronRight size={18} />
                 </div>
               )}
