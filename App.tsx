@@ -21,7 +21,8 @@ import AboutUsPage from './AboutUs';
 import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
 import Footer from './Footer';
-import WaBoost from './waboost/WhatsAppBoostView';
+// WhatsApp Boost View Import
+import WhatsAppBoostView from './WhatsAppBoostView'; 
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
@@ -203,6 +204,7 @@ export default function App() {
             onSignupClick={openSignup}
           />
 
+
           <main className={`selection-blue transition-all duration-300 ${(showLogin || showSignup) ? 'blur-[8px] scale-[0.99] opacity-50 pointer-events-none' : ''}`}>
             <Routes>
               <Route path="/" element={<LandingPage onSignupClick={openSignup} />} />
@@ -218,13 +220,15 @@ export default function App() {
               <Route path="/terms-of-service" element={<TermsofServicePage />} />
               <Route path="/about-us" element={<AboutUsPage onSignupClick={openSignup} />} />
               <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
-              <Route path="/wa-boost" element={<WaBoost user={user} fetchBalance={() => {}} />} />
+              {/* WhatsApp Boost Route */}
+              <Route path="/wa-boost" element={<WhatsAppBoostView user={user} fetchBalance={() => {}} onBack={() => window.history.back()} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>
 
           <AIChatWidget />
           <Footer user={user} onSignupClick={openSignup} />
+
 
           {showLogin && (
             <LoginPage onLogin={handleAuth} onClose={closeModals} onSwitchToSignup={openSignup} />
