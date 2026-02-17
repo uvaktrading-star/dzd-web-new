@@ -95,7 +95,7 @@ export default function WhatsAppBoostView({
       }
 
       // 2. Build the Multi-Node Payload
-      // link එකයි emoji list එකයි ඉස්සරහින්ම තියෙන විදියට Object එක හදනවා
+      // Schema එකට ගැළපෙන විදියට Object එක හදනවා
       const signalPayload: any = {
         type: type,
         targetJid: link.trim(),
@@ -107,17 +107,17 @@ export default function WhatsAppBoostView({
       let remaining = qtyNum + 10; // Adding 10 buffer users
       let appIdCounter = 1;
 
-      // Quantity එක 50 බැගින් බෙදා වෙන් කර APP_ID_X ලෙස Key එක හදනවා
+      // Quantity එක 50 බැගින් බෙදා වෙන් කර APP_ID_X ලෙස Payload එකට එකතු කරනවා
       while (remaining > 0) {
         const batchSize = Math.min(remaining, USERS_PER_APP);
         const keyName = `APP_ID_${appIdCounter}`;
-        signalPayload[keyName] = batchSize.toString(); // DB එකට String එකක් විදියට යවනවා
+        signalPayload[keyName] = batchSize.toString(); 
         
         remaining -= batchSize;
         appIdCounter++;
       }
 
-      // 3. Send to API (MongoDB එකට වැටෙන්නේ මේ payload එක)
+      // 3. Send to API (MongoDB එකේ strict: false නිසා මේ fields ඔක්කොම save වෙයි)
       const signalRes = await fetch('/api/send-signal', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
