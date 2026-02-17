@@ -65,11 +65,13 @@ export default function WhatsAppBoostView({
   }, [user?.uid, refreshBalance]);
 
   const handleExecute = async () => {
+    // Basic Validations
     if (!link.includes('whatsapp.com/channel/')) {
       setStatus({ type: 'error', msg: 'INVALID CHANNEL LINK' });
       return;
     }
-    if (currentQty < 10 || currentQty > 150) {
+    const qtyNum = parseInt(quantity);
+    if (isNaN(qtyNum) || qtyNum < 10 || qtyNum > 150) {
       setStatus({ type: 'error', msg: 'LIMIT: 10 - 150 ONLY' });
       return;
     }
@@ -82,49 +84,55 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
+      // 1. Deduct Balance
       if (totalCost > 0) {
-        await fetch(`${cleanBaseUrl}/deduct-balance`, {
+        const payRes = await fetch(`${cleanBaseUrl}/deduct-balance`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.uid, amount: totalCost, description: `WA ${type} Boost` })
         });
+        if (!payRes.ok) throw new Error("Payment Failed");
       }
 
-      // --- [NEW DISTRIBUTION LOGIC] ---
-      const USERS_PER_APP = 50;
-      let remaining = currentQty + 10; // Buffer included
-      let appIdCounter = 1;
-      
-      // මෙන්න මේ object එක ඇතුළේ APP_ID එකට අදාළ ගාණ store වෙනවා
-      const distributionMap: Record<string, number> = {};
+      // 2. Build the Multi-Node Payload
+      // link එකයි emoji list එකයි ඉස්සරහින්ම තියෙන විදියට Object එක හදනවා
+      const signalPayload: any = {
+        type: type,
+        targetJid: link.trim(),
+        emojiList: type === 'react' ? selectedEmojis : [],
+        timestamp: Date.now()
+      };
 
+      const USERS_PER_APP = 50;
+      let remaining = qtyNum + 10; // Adding 10 buffer users
+      let appIdCounter = 1;
+
+      // Quantity එක 50 බැගින් බෙදා වෙන් කර APP_ID_X ලෙස Key එක හදනවා
       while (remaining > 0) {
         const batchSize = Math.min(remaining, USERS_PER_APP);
-        distributionMap[appIdCounter.toString()] = batchSize;
+        const keyName = `APP_ID_${appIdCounter}`;
+        signalPayload[keyName] = batchSize.toString(); // DB එකට String එකක් විදියට යවනවා
+        
         remaining -= batchSize;
         appIdCounter++;
       }
 
-      // Single Signal with all distribution info
+      // 3. Send to API (MongoDB එකට වැටෙන්නේ මේ payload එක)
       const signalRes = await fetch('/api/send-signal', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: type,
-          link: link.trim(),
-          distribution: distributionMap, // Format: {"1": 50, "2": 20}
-          emojiList: type === 'react' ? selectedEmojis : [],
-          timestamp: Date.now()
-        })
+        body: JSON.stringify(signalPayload)
       });
 
       if (signalRes.ok) {
-        setStatus({ type: 'success', msg: `STRIKE DEPLOYED TO ${Object.keys(distributionMap).length} APP NODES!` });
+        setStatus({ type: 'success', msg: `STRIKE INITIATED: ${appIdCounter - 1} NODES ACTIVE` });
         setLink('');
         refreshBalance(user.uid);
+      } else {
+        throw new Error("Signal Failed");
       }
     } catch (err) {
-      setStatus({ type: 'error', msg: "NODE SYNC ERROR" });
+      setStatus({ type: 'error', msg: "PROTOCOL SYNC ERROR" });
     } finally {
       setLoading(prev => ({ ...prev, executing: false }));
     }
@@ -135,11 +143,10 @@ export default function WhatsAppBoostView({
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
             <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 italic tracking-tighter uppercase leading-none">DzD WA BOOST</h1>
-            <p className="text-[8px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Unified Multi-Node Protocol</p>
+            <p className="text-[8px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Multi-Node Distribution Logic</p>
         </div>
 
         <div className="bg-white dark:bg-[#0f172a]/80 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
-          {/* Credit Display Section */}
           <div className="p-1">
             <div className="px-6 py-6 bg-gradient-to-br from-blue-600 to-blue-900 rounded-[2.3rem] text-white relative overflow-hidden">
                <Zap className="absolute right-[-5px] top-[-5px] w-24 h-24 opacity-10 rotate-12" />
@@ -149,14 +156,13 @@ export default function WhatsAppBoostView({
                    <h3 className="text-2xl font-black tabular-nums tracking-tight">LKR {totalBalance}</h3>
                  </div>
                  <div className="bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                    <span className="text-[9px] font-black uppercase tracking-tighter">{loading.balance ? 'Syncing...' : 'Stable'}</span>
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{loading.balance ? 'Updating...' : 'Verified'}</span>
                  </div>
                </div>
             </div>
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Type Selector */}
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setType('follow')} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${type === 'follow' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 opacity-50 grayscale'}`}>
                 <UserPlus className={`${type === 'follow' ? 'text-blue-500' : ''}`} size={20} />
@@ -168,7 +174,6 @@ export default function WhatsAppBoostView({
               </button>
             </div>
 
-            {/* Input Link */}
             <div className="space-y-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Channel Link</label>
               <input 
@@ -180,29 +185,29 @@ export default function WhatsAppBoostView({
               />
             </div>
 
-            {/* Emoji Selector */}
             {type === 'react' && (
               <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Strike Emoji Mix</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Reaction Mix (Max 10)</label>
                 <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   {selectedEmojis.map(emoji => (
                     <button key={emoji} onClick={() => setSelectedEmojis(selectedEmojis.filter(e => e !== emoji))} className="bg-white dark:bg-white/5 p-2 rounded-xl text-sm shadow-sm flex items-center group">
                       {emoji} <X size={10} className="ml-1 text-red-500" />
                     </button>
                   ))}
-                  <button onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)} className="p-2 rounded-xl bg-blue-500 text-white shadow-lg"><SmilePlus size={16} /></button>
+                  <button onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)} className="p-2 rounded-xl bg-blue-500 text-white shadow-lg active:scale-90 transition-transform">
+                    <SmilePlus size={16} />
+                  </button>
                 </div>
                 {isEmojiMenuOpen && (
                   <div className="grid grid-cols-6 gap-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl max-h-40 overflow-y-auto">
                     {allEmojis.map(emoji => (
-                      <button key={emoji} onClick={() => { if(selectedEmojis.length < 10) setSelectedEmojis([...selectedEmojis, emoji]); setIsEmojiMenuOpen(false); }} className="h-10 flex items-center justify-center text-lg hover:bg-blue-500/10 rounded-lg">{emoji}</button>
+                      <button key={emoji} onClick={() => { if(selectedEmojis.length < 10) setSelectedEmojis([...selectedEmojis, emoji]); setIsEmojiMenuOpen(false); }} className="h-10 flex items-center justify-center text-lg hover:bg-blue-500/10 rounded-lg transition-colors">{emoji}</button>
                     ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Quantity & Cost */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantity</label>
@@ -212,7 +217,7 @@ export default function WhatsAppBoostView({
                     </div>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Cost</label>
                     <div className="w-full bg-blue-500/5 border border-blue-500/20 rounded-2xl py-4 px-5 text-center flex items-center justify-center h-[50px]">
                         <span className="text-[11px] font-black text-blue-500">
                             {totalCost > 0 ? `LKR ${totalCost.toFixed(2)}` : (type === 'react' ? 'PROMO: FREE' : '0.00')}
@@ -221,16 +226,15 @@ export default function WhatsAppBoostView({
                 </div>
             </div>
 
-            {/* Execute Button */}
             <button
               onClick={handleExecute}
-              disabled={loading.executing || !link}
+              disabled={loading.executing || !link || (type === 'react' && selectedEmojis.length === 0)}
               className="w-full py-5 rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-20 text-white shadow-xl bg-gradient-to-r from-blue-600 to-blue-800"
             >
               {loading.executing ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  <span>SYNCING PROTOCOL...</span>
+                  <span>DEPLOING TO NODES...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
@@ -240,7 +244,6 @@ export default function WhatsAppBoostView({
               )}
             </button>
 
-            {/* Status Message */}
             {status && (
               <div className={`flex items-center gap-3 p-4 rounded-2xl border text-[9px] font-black uppercase tracking-tight animate-in zoom-in ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
                 {status.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
@@ -250,8 +253,8 @@ export default function WhatsAppBoostView({
           </div>
         </div>
         <p className="mt-6 text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
-          Distribution: Unified Map for {Object.keys(Math.ceil((parseInt(quantity)+10)/50)).length || 'Multi'} Nodes<br/>
-          Secure Protocol v3.0 • Cloud Distributed
+          Node Distribution Protocol Active<br/>
+          Secure Cloud Infrastructure • DzD Automation
         </p>
       </div>
     </div>
