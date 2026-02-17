@@ -33,7 +33,7 @@ export default function WhatsAppBoostView({
   const [isEmojiMenuOpen, setIsEmojiMenuOpen] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  const allEmojis = ["❤️", "🔥", "👍", "✨", "💙", "😂", "💯", "✅", "🙌", "🤩", "⚡", "🌟", "🎉", "👑", "💪", "🌈"];
+  const allEmojis = ["❤️", "💙", "💚", "💛", "🤍", "😂", "😃", "😍", "😪", "😒", "😡", "👍", "👎", "👊", "👌", "🙏", "🎉", "✨", "🎀", "🎭", "🌝", "🌚", "🌈", "⚡"];
   const cleanBaseUrl = WORKER_URL?.replace(/\/$/, "");
 
   // Cost Calculation logic
