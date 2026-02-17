@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGO_URI = "mongodb+srv://zanta-md:Akashkavindu12345@cluster0.iw4vklq.mongodb.net/?appName=Cluster0";
+const MONGO_URI = "mongodb+srv://zanta-test:Akashkavindu12345@cluster0.qedizqe.mongodb.net/?appName=Cluster0";
 
 // Schema එක define කිරීම
 const SignalSchema = new mongoose.Schema({
