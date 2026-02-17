@@ -36,13 +36,12 @@ export default function WhatsAppBoostView({
   const allEmojis = ["❤️", "🔥", "👍", "✨", "💙", "😂", "💯", "✅", "🙌", "🤩", "⚡", "🌟", "🎉", "👑", "💪", "🌈"];
   const cleanBaseUrl = WORKER_URL?.replace(/\/$/, "");
 
-  // --- [CALCULATE COST] ---
+  // Cost Calculation logic
   const currentQty = parseInt(quantity) || 0;
   let totalCost = 0;
   if (type === 'follow') {
     totalCost = (currentQty * 35) / 100;
   } else {
-    // Reactions: First 100 Free, then 5 LKR per 100
     totalCost = currentQty > 100 ? ((currentQty - 100) * 5) / 100 : 0;
   }
 
@@ -74,7 +73,6 @@ export default function WhatsAppBoostView({
       setStatus({ type: 'error', msg: 'LIMIT: 10 - 150 ONLY' });
       return;
     }
-
     if (parseFloat(totalBalance) < totalCost) {
       setStatus({ type: 'error', msg: 'INSUFFICIENT BALANCE' });
       return;
@@ -84,7 +82,6 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. Deduct Balance if cost > 0
       if (totalCost > 0) {
         await fetch(`${cleanBaseUrl}/deduct-balance`, {
           method: "POST",
@@ -93,41 +90,41 @@ export default function WhatsAppBoostView({
         });
       }
 
-      // 2. Split Quantity across Heroku Apps (Max 50 per app)
+      // --- [NEW DISTRIBUTION LOGIC] ---
       const USERS_PER_APP = 50;
-      let remaining = currentQty + 10; // Adding your +10 buffer
-      let appId = 1;
-      const signals = [];
+      let remaining = currentQty + 10; // Buffer included
+      let appIdCounter = 1;
+      
+      // මෙන්න මේ object එක ඇතුළේ APP_ID එකට අදාළ ගාණ store වෙනවා
+      const distributionMap: Record<string, number> = {};
 
       while (remaining > 0) {
         const batchSize = Math.min(remaining, USERS_PER_APP);
-        const formattedTarget = type === 'react' 
-          ? `${link.trim()},${selectedEmojis.join('.')},${batchSize}` 
-          : `${link.trim()},${batchSize}`;
-
-        signals.push(
-          fetch('/api/send-signal', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: type,
-              targetJid: formattedTarget,
-              serverId: appId.toString(), // Sending APP_ID as serverId
-              emojiList: selectedEmojis
-            })
-          })
-        );
+        distributionMap[appIdCounter.toString()] = batchSize;
         remaining -= batchSize;
-        appId++;
+        appIdCounter++;
       }
 
-      await Promise.all(signals);
-      
-      setStatus({ type: 'success', msg: `STRIKE DEPLOYED TO ${signals.length} APP NODES!` });
-      setLink('');
-      refreshBalance(user.uid);
+      // Single Signal with all distribution info
+      const signalRes = await fetch('/api/send-signal', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: type,
+          link: link.trim(),
+          distribution: distributionMap, // Format: {"1": 50, "2": 20}
+          emojiList: type === 'react' ? selectedEmojis : [],
+          timestamp: Date.now()
+        })
+      });
+
+      if (signalRes.ok) {
+        setStatus({ type: 'success', msg: `STRIKE DEPLOYED TO ${Object.keys(distributionMap).length} APP NODES!` });
+        setLink('');
+        refreshBalance(user.uid);
+      }
     } catch (err) {
-      setStatus({ type: 'error', msg: "SYSTEM OVERLOAD. TRY AGAIN." });
+      setStatus({ type: 'error', msg: "NODE SYNC ERROR" });
     } finally {
       setLoading(prev => ({ ...prev, executing: false }));
     }
@@ -138,16 +135,17 @@ export default function WhatsAppBoostView({
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
             <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 italic tracking-tighter uppercase leading-none">DzD WA BOOST</h1>
-            <p className="text-[8px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Multi-Node Hybrid Automation</p>
+            <p className="text-[8px] font-bold text-slate-400 tracking-[0.3em] uppercase mt-1">Unified Multi-Node Protocol</p>
         </div>
 
         <div className="bg-white dark:bg-[#0f172a]/80 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden backdrop-blur-xl">
+          {/* Credit Display Section */}
           <div className="p-1">
             <div className="px-6 py-6 bg-gradient-to-br from-blue-600 to-blue-900 rounded-[2.3rem] text-white relative overflow-hidden">
                <Zap className="absolute right-[-5px] top-[-5px] w-24 h-24 opacity-10 rotate-12" />
                <div className="relative z-10 flex justify-between items-center">
                  <div>
-                   <p className="text-blue-100 text-[9px] font-black uppercase tracking-widest opacity-80">Sync Balance</p>
+                   <p className="text-blue-100 text-[9px] font-black uppercase tracking-widest opacity-80">Credits Available</p>
                    <h3 className="text-2xl font-black tabular-nums tracking-tight">LKR {totalBalance}</h3>
                  </div>
                  <div className="bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
@@ -158,19 +156,21 @@ export default function WhatsAppBoostView({
           </div>
 
           <div className="p-6 space-y-5">
+            {/* Type Selector */}
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setType('follow')} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${type === 'follow' ? 'border-blue-500 bg-blue-500/5' : 'border-slate-100 dark:border-white/5 opacity-50 grayscale'}`}>
                 <UserPlus className={`${type === 'follow' ? 'text-blue-500' : ''}`} size={20} />
-                <span className="font-black text-[11px] mt-1 dark:text-white">Followers</span>
+                <span className="font-black text-[11px] mt-1 dark:text-white uppercase">Followers</span>
               </button>
               <button onClick={() => setType('react')} className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${type === 'react' ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-100 dark:border-white/5 opacity-50 grayscale'}`}>
                 <Heart className={`${type === 'react' ? 'text-cyan-500' : ''}`} size={20} />
-                <span className="font-black text-[11px] mt-1 dark:text-white">Reactions</span>
+                <span className="font-black text-[11px] mt-1 dark:text-white uppercase">Reactions</span>
               </button>
             </div>
 
+            {/* Input Link */}
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Channel Endpoint</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Channel Link</label>
               <input 
                 type="text"
                 placeholder="https://whatsapp.com/channel/..."
@@ -180,26 +180,29 @@ export default function WhatsAppBoostView({
               />
             </div>
 
+            {/* Emoji Selector */}
             {type === 'react' && (
               <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Strike Emoji Mix</label>
                 <div className="flex flex-wrap gap-2 p-2 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   {selectedEmojis.map(emoji => (
                     <button key={emoji} onClick={() => setSelectedEmojis(selectedEmojis.filter(e => e !== emoji))} className="bg-white dark:bg-white/5 p-2 rounded-xl text-sm shadow-sm flex items-center group">
                       {emoji} <X size={10} className="ml-1 text-red-500" />
                     </button>
                   ))}
-                  <button onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)} className="p-2 rounded-xl bg-blue-500 text-white"><SmilePlus size={16} /></button>
+                  <button onClick={() => setIsEmojiMenuOpen(!isEmojiMenuOpen)} className="p-2 rounded-xl bg-blue-500 text-white shadow-lg"><SmilePlus size={16} /></button>
                 </div>
                 {isEmojiMenuOpen && (
-                  <div className="grid grid-cols-6 gap-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl">
+                  <div className="grid grid-cols-6 gap-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl max-h-40 overflow-y-auto">
                     {allEmojis.map(emoji => (
-                      <button key={emoji} onClick={() => { if(selectedEmojis.length < 10) setSelectedEmojis([...selectedEmojis, emoji]); setIsEmojiMenuOpen(false); }} className="h-10 flex items-center justify-center text-lg hover:scale-110 transition-transform">{emoji}</button>
+                      <button key={emoji} onClick={() => { if(selectedEmojis.length < 10) setSelectedEmojis([...selectedEmojis, emoji]); setIsEmojiMenuOpen(false); }} className="h-10 flex items-center justify-center text-lg hover:bg-blue-500/10 rounded-lg">{emoji}</button>
                     ))}
                   </div>
                 )}
               </div>
             )}
 
+            {/* Quantity & Cost */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantity</label>
@@ -209,15 +212,16 @@ export default function WhatsAppBoostView({
                     </div>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Charge</label>
-                    <div className="w-full bg-blue-500/5 border border-blue-500/20 rounded-2xl py-4 px-5 text-center">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Price</label>
+                    <div className="w-full bg-blue-500/5 border border-blue-500/20 rounded-2xl py-4 px-5 text-center flex items-center justify-center h-[50px]">
                         <span className="text-[11px] font-black text-blue-500">
-                            {totalCost > 0 ? `LKR ${totalCost.toFixed(2)}` : (type === 'react' ? '100 FREE' : '0.00')}
+                            {totalCost > 0 ? `LKR ${totalCost.toFixed(2)}` : (type === 'react' ? 'PROMO: FREE' : '0.00')}
                         </span>
                     </div>
                 </div>
             </div>
 
+            {/* Execute Button */}
             <button
               onClick={handleExecute}
               disabled={loading.executing || !link}
@@ -226,16 +230,17 @@ export default function WhatsAppBoostView({
               {loading.executing ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  <span>SYNCING NODES...</span>
+                  <span>SYNCING PROTOCOL...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
                   <Target size={18} />
-                  <span>INITIATE MULTI-STRIKE</span>
+                  <span>INITIATE DZD STRIKE</span>
                 </div>
               )}
             </button>
 
+            {/* Status Message */}
             {status && (
               <div className={`flex items-center gap-3 p-4 rounded-2xl border text-[9px] font-black uppercase tracking-tight animate-in zoom-in ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
                 {status.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
@@ -245,8 +250,8 @@ export default function WhatsAppBoostView({
           </div>
         </div>
         <p className="mt-6 text-center text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
-          Load Balance: Distributed across {Math.ceil((parseInt(quantity)+10)/50)} App Nodes<br/>
-          Secure Protocol v2.4.1 - DzD Network
+          Distribution: Unified Map for {Object.keys(Math.ceil((parseInt(quantity)+10)/50)).length || 'Multi'} Nodes<br/>
+          Secure Protocol v3.0 • Cloud Distributed
         </p>
       </div>
     </div>
