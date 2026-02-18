@@ -9,7 +9,8 @@ import {
   SmilePlus,
   X,
   Target,
-  Hash
+  ChevronDown,
+  Lock
 } from 'lucide-react';
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
@@ -28,7 +29,7 @@ export default function WhatsAppBoostView({
   const [loading, setLoading] = useState({ balance: false, executing: false });
   const [link, setLink] = useState('');
   const [type, setType] = useState<'follow' | 'react'>('follow');
-  const [quantity, setQuantity] = useState<string>("50");
+  const [quantity, setQuantity] = useState<string>("55"); // Default to 55
   const [selectedEmojis, setSelectedEmojis] = useState<string[]>(["❤️"]);
   const [isEmojiMenuOpen, setIsEmojiMenuOpen] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
@@ -36,12 +37,16 @@ export default function WhatsAppBoostView({
   const allEmojis = ["❤️", "💙", "💚", "💛", "🤍", "😂", "😃", "😍", "😪", "😒", "😡", "👍", "👎", "👊", "👌", "🙏", "🎉", "✨", "🎀", "🎭", "🌝", "🌚", "🌈", "⚡"];
   const cleanBaseUrl = WORKER_URL?.replace(/\/$/, "");
 
-  // Cost Calculation logic
+  // Quantity Options (55 increments)
+  const qtyOptions = [55, 110, 165, 220, 275, 330, 385, 440, 495, 550, 605, 660, 715, 770, 825, 880, 935, 1000];
+
+  // Cost Calculation logic (100 = 35 LKR for followers)
   const currentQty = parseInt(quantity) || 0;
   let totalCost = 0;
   if (type === 'follow') {
     totalCost = (currentQty * 35) / 100;
   } else {
+    // Reactions: first 100 free, then 5 per 100 (Based on your original logic)
     totalCost = currentQty > 100 ? ((currentQty - 100) * 5) / 100 : 0;
   }
 
@@ -65,14 +70,8 @@ export default function WhatsAppBoostView({
   }, [user?.uid, refreshBalance]);
 
   const handleExecute = async () => {
-    // Basic Validations
     if (!link.includes('whatsapp.com/channel/')) {
       setStatus({ type: 'error', msg: 'INVALID CHANNEL LINK' });
-      return;
-    }
-    const qtyNum = parseInt(quantity);
-    if (isNaN(qtyNum) || qtyNum < 10 || qtyNum > 150) {
-      setStatus({ type: 'error', msg: 'LIMIT: 10 - 150 ONLY' });
       return;
     }
     if (parseFloat(totalBalance) < totalCost) {
@@ -84,7 +83,6 @@ export default function WhatsAppBoostView({
     setStatus(null);
 
     try {
-      // 1. Deduct Balance
       if (totalCost > 0) {
         const payRes = await fetch(`${cleanBaseUrl}/deduct-balance`, {
           method: "POST",
@@ -94,8 +92,6 @@ export default function WhatsAppBoostView({
         if (!payRes.ok) throw new Error("Payment Failed");
       }
 
-      // 2. Build the Multi-Node Payload
-      // Schema එකට ගැළපෙන විදියට Object එක හදනවා
       const signalPayload: any = {
         type: type,
         targetJid: link.trim(),
@@ -104,20 +100,17 @@ export default function WhatsAppBoostView({
       };
 
       const USERS_PER_APP = 50;
-      let remaining = qtyNum + 10; // Adding 10 buffer users
+      let remaining = currentQty + 10; 
       let appIdCounter = 1;
 
-      // Quantity එක 50 බැගින් බෙදා වෙන් කර APP_ID_X ලෙස Payload එකට එකතු කරනවා
       while (remaining > 0) {
         const batchSize = Math.min(remaining, USERS_PER_APP);
         const keyName = `APP_ID_${appIdCounter}`;
         signalPayload[keyName] = batchSize.toString(); 
-        
         remaining -= batchSize;
         appIdCounter++;
       }
 
-      // 3. Send to API (MongoDB එකේ strict: false නිසා මේ fields ඔක්කොම save වෙයි)
       const signalRes = await fetch('/api/send-signal', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -210,10 +203,23 @@ export default function WhatsAppBoostView({
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantity</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Quantity</label>
                     <div className="relative">
-                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                        <input type="number" min="10" max="150" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-10 pr-4 text-xs font-black dark:text-white outline-none focus:ring-2 ring-blue-500/20"/>
+                        <select 
+                          value={quantity} 
+                          onChange={(e) => setQuantity(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl py-4 pl-4 pr-10 text-xs font-black dark:text-white outline-none appearance-none focus:ring-2 ring-blue-500/20"
+                        >
+                          {qtyOptions.map(option => {
+                            const isLocked = option > 165;
+                            return (
+                              <option key={option} value={option} disabled={isLocked} className="dark:bg-slate-900">
+                                {option} {isLocked ? '🔒' : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                     </div>
                 </div>
                 <div className="space-y-1.5">
