@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase'; 
+import emailjs from '@emailjs/browser'; // EmailJS import කරන ලදී
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
 
@@ -131,6 +132,39 @@ export default function BillingPageView({ user: propUser }: any) {
     setShowNotifications(false);
   };
 
+  // ඊමේල් යැවීමේ Function එක
+  const sendEmailNotifications = async (depositAmount: string) => {
+    const adminEmails = [
+      'educatelux1@gmail.com',
+      'Aadilmax2023@gmail.com',
+      'Uvaktrading@gmail.com'
+    ];
+
+    const templateParams = {
+      from_name: currentUser.displayName || currentUser.email,
+      user_email: currentUser.email,
+      amount: depositAmount,
+      message: `A new deposit of LKR ${depositAmount} has been submitted by ${currentUser.email}. Please verify the receipt.`,
+    };
+
+    // ලිපින තුනටම ඊමේල් යැවීම
+    const emailPromises = adminEmails.map(email => {
+        return emailjs.send(
+            'service_default', // EmailJS Service ID
+            'template_default', // EmailJS Template ID
+            { ...templateParams, to_email: email },
+            'byqe zcwl ytjw opf' // ඔබ ලබාදුන් App Password/Public Key
+        );
+    });
+
+    try {
+      await Promise.all(emailPromises);
+      console.log("Admin notifications sent.");
+    } catch (err) {
+      console.error("Email notification failed:", err);
+    }
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !currentUser) return showNotification("Please select a receipt.", "error");
@@ -146,6 +180,9 @@ export default function BillingPageView({ user: propUser }: any) {
     try {
       const response = await fetch(`${WORKER_URL}/submit-deposit`, { method: "POST", body: formData });
       if (response.ok) {
+        // සාර්ථක වූ විට ඊමේල් යැවීම සිදු කරයි
+        await sendEmailNotifications(amount);
+
         showNotification("Deposit submitted for verification successfully!", "success");
         setAmount(''); 
         setSelectedFile(null); 
