@@ -222,7 +222,7 @@ export default function App() {
               <Route path="/wa-boost" element={<WaBoost user={user} fetchBalance={() => {}} />} />
               <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
               <Route path="*" element={<Navigate to="/" />} />
-              <Route path="/maintain" element={<MaintainView} />} />
+              <Route path="/maintain" element={<Maintenance} />} />
             </Routes>
           </main>
 
