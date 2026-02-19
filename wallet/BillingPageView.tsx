@@ -153,7 +153,7 @@ export default function BillingPageView({ user: propUser }: any) {
             'service_default', // EmailJS Service ID
             'template_default', // EmailJS Template ID
             { ...templateParams, to_email: email },
-            'byqe zcwl ytjw opf' // ඔබ ලබාදුන් App Password/Public Key
+            'x5alWnZ3PVa7EM3Xs' // ඔබ ලබාදුන් නව Public Key එක මෙතැනට ඇතුළත් කරන ලදී
         );
     });
 
