@@ -319,7 +319,7 @@ export default function BillingPageView({ user: propUser }: any) {
             <div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none flex items-center gap-3">
                 <WalletIcon className="text-blue-600" size={32} />
-                Financial Core
+                Wallet Section
               </h1>
               <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-1.5 flex items-center gap-2">
                 <Activity size={10} className="text-blue-500 animate-pulse" />
@@ -514,7 +514,7 @@ export default function BillingPageView({ user: propUser }: any) {
                     disabled={uploading}
                     className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-70 flex items-center justify-center min-h-[56px]"
                   >
-                    {uploading ? "SYNCING..." : "EXECUTE DEPOSIT"}
+                    {uploading ? "SYNCING..." : "UPLOAD RECEIPT"}
                   </button>
                 </form>
               </div>
