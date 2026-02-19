@@ -22,6 +22,7 @@ import AIChatWidget from './AiChatWidget';
 import PricingPage from './PricingPage';
 import Footer from './Footer';
 import WaBoost from './waboost/WhatsAppBoostView';
+import Maintain from './Maintenance.tsx'
 
 // Loading Spinner Component with inline styles
 const LoadingSpinner = () => {
@@ -221,6 +222,7 @@ export default function App() {
               <Route path="/wa-boost" element={<WaBoost user={user} fetchBalance={() => {}} />} />
               <Route path="/pricing" element={<PricingPage onSignupClick={openSignup} />} />
               <Route path="*" element={<Navigate to="/" />} />
+              <Route path="/maintain" element={<MaintainView} />} />
             </Routes>
           </main>
 
